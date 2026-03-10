@@ -325,3 +325,75 @@ sin_h = (math.sin(phi)*math.sin(delta) +
 angle_solaire_deg = math.degrees(math.asin(sin_h))
 
 print(f"Voici vos résultats ! Le {jour} {mois}, au pays sélectionné, à {heure}h, le Soleil se trouve à {round(angle_solaire_deg,2)} degrès")
+
+
+import math
+
+#Liste indiquant chacun des phototypes
+phototypes = [
+    "Phototype Celtique - Peau très claire, Cheveux roux à blond roux",
+    "Phototype Nordique - Peau claire, Cheveux blonds à brun clair",
+    "Phototype Mixte - Peau claire à brun clair, Cheveux blond foncé à brun",
+    "Phototype Méditerranéen - Peau brun clair / olive, Cheveux brun foncé",
+    "Phototype Foncé - Peau brun foncé, Cheveux brun foncé à noir",
+    "Phototype Très Foncé - Peau brun foncé à noir, Cheveux noirs"
+]
+
+#Ce petit bout de code vient de ChatGPT (lignes 16 et 17)
+#Demande à l'utilisateur de sélectionner son phototype
+print("Choisissez votre phototype parmi ceux-ci :\n")
+for i, p in enumerate(phototypes, 1): #on soustrait 1 car les indices de la liste commencent à 0
+    print(f"{i}. {p}")
+
+phototype_index = int(input("\nEntrez le numéro correspondant à votre phototype : ")) -1
+
+
+if 0 <= phototype_index and phototype_index <= 5:
+    print("Parfait! Le phototype sélectionné est:",phototypes[phototype_index])
+
+    #Conversion de l'angle en radians
+    angle_solaire = math.radians(45)
+
+    indice_uv = float(input("Veuillez entrer l'indice UV mesuré à votre position géographique (valeur comprise entre 0 et 11):"))
+
+    if 11 < indice_uv or indice_uv < 0:
+        print("L'indice UV entré est invalide, veuillez réessayer.")
+
+    else:
+        #Calcul de l'irradiance totale
+        irradiance_totale = indice_uv * 0.025
+
+        #Liste des différents albédos selon le phototype
+        albedos = [0.42, 0.37, 0.32, 0.27, 0.22, 0.17]
+
+        #Calcul de l'irradiance absorbée (sans crème solaire)
+        irradiance_abs_sans_creme = irradiance_totale * math.cos(angle_solaire) * (1 - albedos[phototype_index])
+
+
+        #Conditions pour l'utilisation de la crème solaire
+
+        SPF_MIN = 30 #la valeur de SPF minimale recommandé est 30
+
+        # Question crème solaire
+        creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
+
+        if creme_solaire == "oui":
+            SPF = int(input("Entrez le facteur de protection solaire (SPF) :"))
+            irradiance_abs_avec_creme = irradiance_abs_sans_creme / SPF
+            difference = irradiance_abs_sans_creme - irradiance_abs_avec_creme
+            print(f"\nSuper ! Avec votre crème solaire de SPF {SPF}, l'intensité des UV reçue est réduite de {round(difference, 3)} W/m²")
+            print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme,3)} W/m².")
+
+
+        elif creme_solaire == "non":
+            irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
+            difference = irradiance_abs_sans_creme - irradiance_spf_min
+            print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m². Pas mal, non ?")
+            print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m²")
+
+        else:
+            print("Réponse invalide, veuillez réessayer.")
+
+
+else:
+    print("Le phototype entré est invalide, veuillez réessayer.")
