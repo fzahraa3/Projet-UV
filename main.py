@@ -226,7 +226,7 @@ if annee.lower()== "oui" :
         "mai": 121,
         "juin": 152,
         "juillet": 182,
-        "août": 213,
+        "aout": 213,
         "septembre": 244,
         "octobre": 274,
         "novembre": 305,
@@ -235,7 +235,7 @@ if annee.lower()== "oui" :
 elif annee.lower() == "non" :
     repertoire_mois = {
         "janvier": 0,
-        "février": 31,
+        "fevrier": 31,
         "mars": 59,
         "avril": 90,
         "mai": 120,
