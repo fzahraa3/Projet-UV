@@ -1,10 +1,6 @@
-'''
-
-
-'''
 
 import math
-#coordonnes terrestres des pays (prises directement de internet )
+#Coordonnées terrestres des pays (prises directement d'Internet )
 countries = {
     "afghanistan": (33.0, 65.0, 4.5),
     "albania": (41.0, 20.0, 1.0),
@@ -148,7 +144,7 @@ countries = {
     "portugal": (39.5, -8.0, 0.0),
     "qatar": (25.3, 51.2, 3.0),
     "romania": (46.0, 25.0, 2.0),
-    "russia": (60.0, 100.0, 7.0), # Moyenne Moscoue(+3) et Vladivostok(+10)
+    "russia": (60.0, 100.0, 7.0), # Moyenne Moscou(+3) et Vladivostok(+10)
     "rwanda": (-2.0, 30.0, 2.0),
     "saint_kitts_and_nevis": (17.3, -62.7, -4.0),
     "saint_lucia": (13.9, -60.9, -4.0),
@@ -208,21 +204,21 @@ pays = input("Assistant : Bonjour ! Je vais vous aider à calculer l'élévation
 
 #Choix du pays par l'utilisateur
 while pays not in countries:
-
     print("Ce pays n'existe pas. Veuillez réessayer")
     pays = input("Entrez le pays : ")
+
 print(f"Assistant : Très bien! j'utiliserai ses coordonnées moyennes.")
 
 latitude = countries[pays][0]
 longitude = countries[pays][1]
 
 #année
-anne = input("Sagit t-il d'une année bissextile ? (oui/non) : ")
+annee = input("S'agit-il d'une année bissextile ? (oui/non) : ")
 
-#Entrer de la date par l'utilisateur (heure et mois)
+#Entrée de la date par l'utilisateur (heure et mois)
 
-if anne.lower()== "oui" :
-    repertoir_mois = {
+if annee.lower()== "oui" :
+    repertoire_mois = {
         "janvier": 0,
         "fevrier": 31,
         "mars": 60,
@@ -236,8 +232,8 @@ if anne.lower()== "oui" :
         "novembre": 305,
         "decembre": 335,
     }
-elif anne.lower() == "non" :
-    repertoir_mois = {
+elif annee.lower() == "non" :
+    repertoire_mois = {
         "janvier": 0,
         "février": 31,
         "mars": 59,
@@ -257,7 +253,7 @@ mois = input("Entendu. À quel mois de l'année faisons-nous cette mesure ?")
 #Nombre de jour à partir du premier janvier
 #b) limites pour le mois
 
-while mois.lower() not in repertoir_mois:
+while mois.lower() not in repertoire_mois:
     mois = input("Ce mois n'existe pas, veuillez recommencer. Entrez le mois :")
 
 
@@ -271,7 +267,7 @@ elif mois.lower() in mois_30:
     max_jour = 30
 
 else:  # concernant février seulement
-    if anne.lower() == "oui":
+    if annee.lower() == "oui":
         max_jour = 29
     else:
         max_jour = 28
@@ -282,7 +278,7 @@ jour = int(input("Et quel jour de ce mois? : "))
 while jour < 1 or jour > max_jour:
     jour = int(input("Jour invalide pour ce mois, recommencez : "))
 
-nombre_jour = repertoir_mois[mois.lower()] + jour
+nombre_jour = repertoire_mois[mois.lower()] + jour
 
 #c) limites pour l'heure
 
@@ -291,7 +287,7 @@ while heure < 0 or heure >= 24 :
     heure = int(input("Cette heure n'existe pas, veuillez recommencer. Entrer une heure de la journée entre 0h et 23h : "))
 
 
-#CALCUL DE L'ANGLE SOLAIRE (l'entierté des calculs suivants ont été verifié par un prof du département de physique)
+#CALCUL DE L'ANGLE SOLAIRE (l'entièreté des calculs suivants ont été verifiés par un prof du département de physique)
 #a) inclinaison solaire
 
 angle_deg = (360/365)*(nombre_jour - 81)
@@ -313,21 +309,18 @@ heure_solaire = heure + (4 * (longitude - long_standard)) / 60
 # 2 - angle horaire
 angle_horaire = 15*(heure_solaire - 12)
 
-#c ) l'angle d'élvation h du soleil
+#c ) l'angle d'élévation h du soleil
 #conversions des mesures en radians
 phi = math.radians(latitude)
 delta = math.radians(declinaison_s)
 omega = math.radians(angle_horaire)
 
-sin_h = (math.sin(phi)*math.sin(delta) +
-         math.cos(phi)*math.cos(delta)*math.cos(omega))
+sin_h = (math.sin(phi)*math.sin(delta) + math.cos(phi)*math.cos(delta)*math.cos(omega))
 
 angle_solaire_deg = math.degrees(math.asin(sin_h))
 
 print(f"Voici vos résultats ! Le {jour} {mois}, au pays sélectionné, à {heure}h, le Soleil se trouve à {round(angle_solaire_deg,2)} degrès")
 
-
-import math
 
 #Liste indiquant chacun des phototypes
 phototypes = [
@@ -341,59 +334,61 @@ phototypes = [
 
 #Ce petit bout de code vient de ChatGPT (lignes 16 et 17)
 #Demande à l'utilisateur de sélectionner son phototype
-print("Choisissez votre phototype parmi ceux-ci :\n")
+print("\nVeuillez maintenant choisir votre phototype parmi ceux-ci :\n")
 for i, p in enumerate(phototypes, 1): #on soustrait 1 car les indices de la liste commencent à 0
     print(f"{i}. {p}")
 
 phototype_index = int(input("\nEntrez le numéro correspondant à votre phototype : ")) -1
 
 
-if 0 <= phototype_index and phototype_index <= 5:
-    print("Parfait! Le phototype sélectionné est:",phototypes[phototype_index])
+while phototype_index < 0 or phototype_index > 5:
+    phototype_index = int(input("Numéro invalide. Veuillez entrer un numéro entre 1 et 6 : ")) - 1
 
-    #Conversion de l'angle en radians
-    angle_solaire = math.radians(45)
+print("Parfait! Le phototype sélectionné est:",phototypes[phototype_index])
 
-    indice_uv = float(input("Veuillez entrer l'indice UV mesuré à votre position géographique (valeur comprise entre 0 et 11):"))
+#Entrée de l'indice UV par l'utilisateur
+indice_uv = float(input("Veuillez entrer l'indice UV mesuré à votre position géographique (valeur comprise entre 0 et 11, disponible dans votre application météo):"))
 
-    if 11 < indice_uv or indice_uv < 0:
-        print("L'indice UV entré est invalide, veuillez réessayer.")
-
-    else:
-        #Calcul de l'irradiance totale
-        irradiance_totale = indice_uv * 0.025
-
-        #Liste des différents albédos selon le phototype
-        albedos = [0.42, 0.37, 0.32, 0.27, 0.22, 0.17]
-
-        #Calcul de l'irradiance absorbée (sans crème solaire)
-        irradiance_abs_sans_creme = irradiance_totale * math.cos(angle_solaire) * (1 - albedos[phototype_index])
+while indice_uv < 0 or indice_uv > 11:
+     indice_uv = float(input("Indice UV invalide. Veuillez entrer une valeur comprise entre 0 et 11 : "))
 
 
-        #Conditions pour l'utilisation de la crème solaire
+#Calcul de l'irradiance totale
+irradiance_totale = indice_uv * 0.025 # 1 unité d'indice UV correspond environ à 0.025 W/m²
 
-        SPF_MIN = 30 #la valeur de SPF minimale recommandé est 30
+#Liste des différents albédos selon le phototype
+albedos = [0.42, 0.37, 0.32, 0.27, 0.22, 0.17]
 
-        # Question crème solaire
-        creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
+#Conversion angle solaire de degrés vers radians
+angle_solaire_rad = math.radians(angle_solaire_deg)
 
-        if creme_solaire == "oui":
-            SPF = int(input("Entrez le facteur de protection solaire (SPF) :"))
-            irradiance_abs_avec_creme = irradiance_abs_sans_creme / SPF
-            difference = irradiance_abs_sans_creme - irradiance_abs_avec_creme
-            print(f"\nSuper ! Avec votre crème solaire de SPF {SPF}, l'intensité des UV reçue est réduite de {round(difference, 3)} W/m²")
-            print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme,3)} W/m².")
+#Calcul de l'irradiance absorbée (sans crème solaire)
+irradiance_abs_sans_creme = irradiance_totale * math.cos(angle_solaire_rad) * (1 - albedos[phototype_index])
 
 
-        elif creme_solaire == "non":
-            irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
-            difference = irradiance_abs_sans_creme - irradiance_spf_min
-            print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m². Pas mal, non ?")
-            print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m²")
+#Conditions pour l'utilisation de la crème solaire
 
-        else:
-            print("Réponse invalide, veuillez réessayer.")
+SPF_MIN = 30 #la valeur de SPF minimale recommandé est 30
+
+# Question crème solaire
+creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
+
+while creme_solaire not in ["oui", "non"]:
+    creme_solaire = input("Réponse invalide. Veuillez répondre par 'oui' ou 'non' : ").lower()
+
+if creme_solaire == "oui":
+        SPF = int(input("Entrez le facteur de protection solaire (SPF) :"))
+        irradiance_abs_avec_creme = irradiance_abs_sans_creme / SPF
+        difference = irradiance_abs_sans_creme - irradiance_abs_avec_creme
+        print(f"\nSuper ! Avec votre crème solaire de SPF {SPF}, l'intensité des UV reçue est réduite de {round(difference, 3)} W/m².")
+        print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme,3)} W/m².")
 
 
-else:
-    print("Le phototype entré est invalide, veuillez réessayer.")
+elif creme_solaire == "non":
+    irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
+    difference = irradiance_abs_sans_creme - irradiance_spf_min
+    print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
+    print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
+
+
+
