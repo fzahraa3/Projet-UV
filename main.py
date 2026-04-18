@@ -1,3 +1,4 @@
+
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -287,41 +288,43 @@ while heure < 0 or heure >= 24 :
     heure = int(input("Cette heure n'existe pas, veuillez recommencer. Entrez une heure de la journée entre 0h et 23h : "))
 
 
-#CALCUL DE L'ANGLE SOLAIRE (l'entièreté des calculs suivants ont été verifiés par un prof du département de physique)
-#a) inclinaison solaire
+#FONCTIONS (l'entièreté des calculs suivants a été verifiée par un prof du département de physique)
+#CALCUL DE LA DÉCLINAISON DU SOLEIL (position du soleil dans l'année)
+def declinaison_solaire(nombre_jour):
+    #transforme le jour de l'année en angle
+    angle_deg = (360/365) * (nombre_jour - 81)
+    angle_rad = math.radians(angle_deg)
+    return 23.44 * math.sin(angle_rad)
 
-angle_deg = (360/365)*(nombre_jour - 81)
-angle_rad = math.radians(angle_deg)
-declinaison_s = 23.44*math.sin(angle_rad)
-
-#b) Angle horaire H
+#CALCUL DE L'ANGLE HORAIRE
 # On récupère les 3 valeurs du dictionnaire
 latitude = countries[pays][0]
 longitude = countries[pays][1]
 utc_offset = countries[pays][2]
 
-# Calcul de la longitude de référence du fuseau
-long_standard = utc_offset * 15
+def angle_horaire(heure, longitude, utc_offset):
+    # Calcul de la longitude de référence du fuseau horaire
+    long_standard = utc_offset * 15
+    # Conversion heure civile en heure solaire
+    heure_solaire = heure + (4 * (longitude - long_standard)) / 60
+    return 15 * (heure_solaire - 12)
 
-# Conversion heure civile en heure solaire
-heure_solaire = heure + (4 * (longitude - long_standard)) / 60
+#CALCUL DE L'ANGLE D'ÉLÉVATION DU SOLEIL
+def angle_solaire(latitude, declinaison_solaire, angle_horaire):
+    #Calcul de l'angle d'élévation h du soleil et conversion en radians
+    phi = math.radians(latitude)
+    delta = math.radians(declinaison_solaire)
+    omega = math.radians(angle_horaire)
+    sin_h = (math.sin(phi)*math.sin(delta) + math.cos(phi)*math.cos(delta)*math.cos(omega))
+    #Conversion en degrés
+    return math.degrees(math.asin(sin_h))
 
-# 2 - angle horaire
-angle_horaire = 15*(heure_solaire - 12)
-
-#c ) l'angle d'élévation h du soleil
-#conversions des mesures en radians
-phi = math.radians(latitude)
-delta = math.radians(declinaison_s)
-omega = math.radians(angle_horaire)
-
-sin_h = (math.sin(phi)*math.sin(delta) + math.cos(phi)*math.cos(delta)*math.cos(omega))
-
-angle_solaire_deg = math.degrees(math.asin(sin_h))
+#On appelle les fonctions
+inclinaison = declinaison_solaire(nombre_jour)
+horaire = angle_horaire(heure, longitude, utc_offset)
+angle_solaire_deg = angle_solaire(latitude, inclinaison, horaire)
 
 print(f"Voici vos résultats ! Le {jour} {mois}, au pays sélectionné, à {heure}h, le Soleil se trouve à {round(angle_solaire_deg,2)} degrès")
-
-
 #Liste indiquant chacun des phototypes
 phototypes = [
     "Phototype Celtique - Peau très claire, Cheveux roux à blond roux",
@@ -332,9 +335,9 @@ phototypes = [
     "Phototype Très Foncé - Peau brun foncé à noir, Cheveux noirs"
 ]
 
-#Ce petit bout de code vient de ChatGPT (lignes 16 et 17)
 #Demande à l'utilisateur de sélectionner son phototype
 print("\nVeuillez maintenant choisir votre phototype parmi ceux-ci :\n")
+#Ce petit bout de code vient de ChatGPT (2 prochaines lignes)
 for i, p in enumerate(phototypes, 1): #on soustrait 1 car les indices de la liste commencent à 0
     print(f"{i}. {p}")
 
@@ -353,174 +356,68 @@ while indice_uv < 0 or indice_uv > 11:
      indice_uv = float(input("Indice UV invalide. Veuillez entrer une valeur comprise entre 0 et 11 : "))
 
 
-#Calcul de l'irradiance totale
-irradiance_totale = indice_uv * 0.025 # 1 unité d'indice UV correspond environ à 0.025 W/m²
-
 #Liste des différents albédos selon le phototype
 albedos = [0.42, 0.37, 0.32, 0.27, 0.22, 0.17]
 
-#Conversion angle solaire de degrés vers radians
-angle_solaire_rad = math.radians(angle_solaire_deg)
+#CALCUL DE L'IRRADIANCE ABSORBÉE (sans crème solaire)
+def irradiance_absorbee (indice_uv, angle_solaire_deg, albedo):
+    irradiance_totale = indice_uv * 0.025 # 1 unité d'indice UV correspond environ à 0.025 W/m²
 
-#Calcul de l'irradiance absorbée (sans crème solaire)
-irradiance_abs_sans_creme = irradiance_totale * math.cos(angle_solaire_rad) * (1 - albedos[phototype_index])
+    if angle_solaire_deg <= 0:
+        return 0
 
+    #Conversion angle solaire de degrés vers radians
+    angle_solaire_rad = math.radians(angle_solaire_deg)
+    return irradiance_totale * math.sin(angle_solaire_rad) * (1-albedo)
 
-#Conditions pour l'utilisation de la crème solaire
+#On appelle la fonction
+irradiance_abs_sans_creme = irradiance_absorbee(indice_uv, angle_solaire_deg, albedos[phototype_index])
 
-SPF_MIN = 30 #la valeur de SPF minimale recommandé est 30
+def scenarios_creme_solaire (irradiance_abs_sans_creme):
+    SPF_MIN = 30  # la valeur de SPF minimale recommandé est 30
 
-# Question crème solaire
-creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
+    # Cas où le soleil est sous l'horizon
+    if irradiance_abs_sans_creme == 0:
+        print("Le soleil est sous l'horizon: aucune exposition UV!")
+        return 0
 
-while creme_solaire not in ["oui", "non"]:
-    creme_solaire = input("Réponse invalide. Veuillez répondre par 'oui' ou 'non' : ").lower()
+    creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
 
-if creme_solaire == "oui":
+    while creme_solaire not in ["oui", "non"]:
+        creme_solaire = input("Réponse invalide. Veuillez répondre par 'oui' ou 'non' : ").lower()
+
+    #Cas où la crème solaire est utilisée
+    if creme_solaire == "oui":
         SPF = int(input("Entrez le facteur de protection solaire (SPF) :"))
         irradiance_abs_avec_creme = irradiance_abs_sans_creme / SPF
         difference = irradiance_abs_sans_creme - irradiance_abs_avec_creme
         print(f"\nSuper ! Avec votre crème solaire de SPF {SPF}, l'intensité des UV reçue est réduite de {round(difference, 3)} W/m².")
-        print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme,3)} W/m².")
+        print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme, 3)} W/m².")
+        return irradiance_abs_avec_creme
 
-
-elif creme_solaire == "non":
-    irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
-    difference = irradiance_abs_sans_creme - irradiance_spf_min
-    print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
-    print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
-
-
-
-
-import matplotlib.pyplot as plt
-
-#graphique energie selon temps
-
-temps = np.arange(1,25)
-
-#energie
-energie = irradiance_abs_sans_creme * temps
-
-
-
-#GRAPHIQUES
-#a) Les abcisses (variable de temps). Nous voulons isoler les valeurs entre le lever et le coucher du soleil car elles sont les plus
-# pertinentes
-# 1 - CONSTANTES LOCALES
-
-phi = math.radians(latitude)
-delta = math.radians(declinaison_s)
-
-
-long_standard = utc_offset * 15
-# 2 - COURBE SUR 24h
-heures = []
-angles = []
-for t in range(heure*3600, 24 * 3600):  # 24h en secondes
-   heure = t / 3600
-   # heure solaire
-   heure_solaire = heure + (4 * (longitude - long_standard)) / 60
-   # angle horaire
-   angle_horaire = 15 * (heure_solaire - 12)
-   omega = math.radians(angle_horaire)
-   # élévation solaire
-   sin_h = (math.sin(phi) * math.sin(delta) +
-            math.cos(phi) * math.cos(delta) * math.cos(omega))
-   sin_h = max(-1, min(1, sin_h))  # sécurité numérique
-
-
-   angle = math.degrees(math.asin(sin_h))
-
-
-   heures.append(heure)
-   angles.append(angle)
-
-
-# =========================
-# 3 - CALCUL LEVER / COUCHER
-
-
-cos_omega = -math.tan(phi) * math.tan(delta)
-cos_omega = max(-1, min(1, cos_omega))
-
-omega = math.degrees(math.acos(cos_omega))
-
-heure_coucher = 12 + omega / 15
-
-
-# 4 - FILTRAGE (zone jour)
-# =========================
-
-
-x_heures = []
-x_angles = []
-
-
-for h, a in zip(heures, angles):
-
-
-   if  h <= heure_coucher:
-       x_heures.append(h)
-       x_angles.append(a)
-
-#Ici, nous avons procédé en deux étapes. Premièrement, nous avons défini un intervalle de temps allant de 0 à 24 heures,
-# discrétisé en secondes. Ensuite, nous avons calculé l’angle solaire associé à chaque instant de la journée et avons stocké ces valeurs dans deux listes intermédiaires.
-#Dans un second temps, nous avons appliqué un filtre en ne conservant que les valeurs de l’angle solaire supérieures ou égales à zéro.
-# Cela correspond aux périodes où le Soleil est au-dessus de l’horizon, c’est-à-dire entre le lever et le coucher du Soleil.
-
-#CALCUL IRRADIANCE  (en fonction du temps)
-
-
-# 1. On crée une liste vide pour stocker nos résultats
-irradiances_par_seconde = []
-irradiance_max = indice_uv * 0.025  # Puissance max au zénith
-
-# 2. On parcourt la liste des angles que tu as déjà calculée
-for i in range(len(x_angles)):                     #Ici nous avions deja creer une liste avec tt les ngle de la journée. on l'utilise pr retrouver l'irradiance
-    angle_actuel = x_angles[i]
-
-    # Si le soleil est au-dessus de l'horizon
-    if angle_actuel > 0:
-        # On calcule le sinus de l'angle (en radians)
-        sin_h = math.sin(math.radians(angle_actuel))
-
-        # On calcule l'irradiance pour cette seconde précise
-        irr_inst = irradiance_max * sin_h
-        irradiances_par_seconde.append(irr_inst)
+    #Cas où la crème solaire n'est pas utilisée
     else:
-        # Si le soleil est couché, l'irradiance est de 0
-        irradiances_par_seconde.append(0.0)
+        irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
+        difference = irradiance_abs_sans_creme - irradiance_spf_min
+        print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
+        print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
+        return irradiance_abs_sans_creme
+
+irradiance_finale = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
 
-#LISTE POUR L'ÉNERGIE
 
 
-# LISTE POUR L'ÉNERGIE (Ordonnées pour le graphique)
-energie_cumulee = []
-somme_temporaire = 0.0
 
-# On utilise range(len(...)) pour parcourir l'indice k
-for k in range(len(irradiances_par_seconde)):
-    # On ajoute l'irradiance de la seconde actuelle à notre total
-    # Énergie = Irradiance * 1 seconde, donc on ajoute juste la valeur
-    somme_temporaire = somme_temporaire + irradiances_par_seconde[k]
 
-    # On ajoute ce cumul dans notre liste d'ordonnées
-    energie_cumulee.append(somme_temporaire)
 
-# Maintenant tu as tes deux listes pour ton graphique :
-# Abscisses (X) : x_heures
-# Ordonnées (Y) : energie_cumulee
 
-print("Ta liste d'énergie est prête pour le graphique !")
 
-import matplotlib.pyplot as plt
 
-plt.plot(x_heures, energie_cumulee)
-plt.title("Énergie solaire accumulée sur la peau")
-plt.xlabel("Heure de la journée (heures)")
-plt.ylabel("Énergie totale (J/m²)")
-plt.show()
+
+
+
+
+
 
 
