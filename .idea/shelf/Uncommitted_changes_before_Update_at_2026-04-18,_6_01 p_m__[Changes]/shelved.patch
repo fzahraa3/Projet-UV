@@ -1,0 +1,198 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+new file mode 100644
+--- /dev/null	(date 1776549656541)
++++ b/.idea/workspace.xml	(date 1776549656541)
+@@ -0,0 +1,187 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="AutoImportSettings">
++    <option name="autoReloadType" value="SELECTIVE" />
++  </component>
++  <component name="ChangeListManager">
++    <list default="true" id="13854dd2-30b2-4bf3-9cc4-87d9560e257d" name="Changes" comment="fonctions">
++      <change afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_2026-04-18__5_51p_m___Changes_.xml" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++    </list>
++    <option name="SHOW_DIALOG" value="false" />
++    <option name="HIGHLIGHT_CONFLICTS" value="true" />
++    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
++    <option name="LAST_RESOLUTION" value="IGNORE" />
++  </component>
++  <component name="FileTemplateManagerImpl">
++    <option name="RECENT_TEMPLATES">
++      <list>
++        <option value="Python Script" />
++      </list>
++    </option>
++  </component>
++  <component name="Git.Settings">
++    <option name="PUSH_AUTO_UPDATE" value="true" />
++    <option name="RECENT_BRANCH_BY_REPOSITORY">
++      <map>
++        <entry key="$PROJECT_DIR$" value="main" />
++      </map>
++    </option>
++    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
++    <option name="UPDATE_TYPE" value="REBASE" />
++  </component>
++  <component name="GitHubPullRequestSearchHistory">{
++  &quot;lastFilter&quot;: {
++    &quot;state&quot;: &quot;OPEN&quot;,
++    &quot;assignee&quot;: &quot;Sarah-577&quot;
++  }
++}</component>
++  <component name="GithubPullRequestsUISettings">{
++  &quot;selectedUrlAndAccountId&quot;: {
++    &quot;url&quot;: &quot;https://github.com/fzahraa3/Projet-UV.git&quot;,
++    &quot;accountId&quot;: &quot;9dedf2b1-79d1-48a2-92ec-3087b2e99e5c&quot;
++  }
++}</component>
++  <component name="ProblemsViewState">
++    <option name="selectedTabId" value="CurrentFile" />
++  </component>
++  <component name="ProjectColorInfo">{
++  &quot;associatedIndex&quot;: 4
++}</component>
++  <component name="ProjectId" id="3Ajt732wGdYqqswO4rBX9rjOA2B" />
++  <component name="ProjectViewState">
++    <option name="hideEmptyMiddlePackages" value="true" />
++    <option name="showLibraryContents" value="true" />
++  </component>
++  <component name="PropertiesComponent">{
++  &quot;keyToString&quot;: {
++    &quot;Python.graphiques.executor&quot;: &quot;Run&quot;,
++    &quot;Python.main.executor&quot;: &quot;Run&quot;,
++    &quot;Python.scenarios.executor&quot;: &quot;Run&quot;,
++    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
++    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
++    &quot;git-widget-placeholder&quot;: &quot;graphiques&quot;
++  }
++}</component>
++  <component name="SharedIndexes">
++    <attachedChunks>
++      <set>
++        <option value="bundled-python-sdk-ce6832f46686-7b97d883f26b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.25557.178" />
++      </set>
++    </attachedChunks>
++  </component>
++  <component name="TaskManager">
++    <task active="true" id="Default" summary="Default task">
++      <changelist id="13854dd2-30b2-4bf3-9cc4-87d9560e257d" name="Changes" comment="" />
++      <created>1773117637047</created>
++      <option name="number" value="Default" />
++      <option name="presentableId" value="Default" />
++      <updated>1773117637047</updated>
++    </task>
++    <task id="LOCAL-00001" summary="push pls">
++      <option name="closed" value="true" />
++      <created>1773117747539</created>
++      <option name="number" value="00001" />
++      <option name="presentableId" value="LOCAL-00001" />
++      <option name="project" value="LOCAL" />
++      <updated>1773117747539</updated>
++    </task>
++    <task id="LOCAL-00002" summary="deuxieme push">
++      <option name="closed" value="true" />
++      <created>1773181476744</created>
++      <option name="number" value="00002" />
++      <option name="presentableId" value="LOCAL-00002" />
++      <option name="project" value="LOCAL" />
++      <updated>1773181476745</updated>
++    </task>
++    <task id="LOCAL-00003" summary="deuxieme push">
++      <option name="closed" value="true" />
++      <created>1773181577728</created>
++      <option name="number" value="00003" />
++      <option name="presentableId" value="LOCAL-00003" />
++      <option name="project" value="LOCAL" />
++      <updated>1773181577728</updated>
++    </task>
++    <task id="LOCAL-00004" summary="push fichier md">
++      <option name="closed" value="true" />
++      <created>1773197050432</created>
++      <option name="number" value="00004" />
++      <option name="presentableId" value="LOCAL-00004" />
++      <option name="project" value="LOCAL" />
++      <updated>1773197050432</updated>
++    </task>
++    <task id="LOCAL-00005" summary="push fichier md">
++      <option name="closed" value="true" />
++      <created>1773197329433</created>
++      <option name="number" value="00005" />
++      <option name="presentableId" value="LOCAL-00005" />
++      <option name="project" value="LOCAL" />
++      <updated>1773197329433</updated>
++    </task>
++    <task id="LOCAL-00006" summary="pays en francais">
++      <option name="closed" value="true" />
++      <created>1774961175381</created>
++      <option name="number" value="00006" />
++      <option name="presentableId" value="LOCAL-00006" />
++      <option name="project" value="LOCAL" />
++      <updated>1774961175381</updated>
++    </task>
++    <task id="LOCAL-00007" summary="push avec le code chelou">
++      <option name="closed" value="true" />
++      <created>1776442903188</created>
++      <option name="number" value="00007" />
++      <option name="presentableId" value="LOCAL-00007" />
++      <option name="project" value="LOCAL" />
++      <updated>1776442903188</updated>
++    </task>
++    <task id="LOCAL-00008" summary="fonctions">
++      <option name="closed" value="true" />
++      <created>1776548983607</created>
++      <option name="number" value="00008" />
++      <option name="presentableId" value="LOCAL-00008" />
++      <option name="project" value="LOCAL" />
++      <updated>1776548983607</updated>
++    </task>
++    <task id="LOCAL-00009" summary="fonctions">
++      <option name="closed" value="true" />
++      <created>1776549522366</created>
++      <option name="number" value="00009" />
++      <option name="presentableId" value="LOCAL-00009" />
++      <option name="project" value="LOCAL" />
++      <updated>1776549522366</updated>
++    </task>
++    <option name="localTasksCounter" value="10" />
++    <servers />
++  </component>
++  <component name="Vcs.Log.Tabs.Properties">
++    <option name="TAB_STATES">
++      <map>
++        <entry key="MAIN">
++          <value>
++            <State />
++          </value>
++        </entry>
++      </map>
++    </option>
++  </component>
++  <component name="VcsManagerConfiguration">
++    <MESSAGE value="push pls" />
++    <MESSAGE value="deuxieme push" />
++    <MESSAGE value="push fichier md" />
++    <MESSAGE value="pays en francais" />
++    <MESSAGE value="push avec le code chelou" />
++    <MESSAGE value="fonctions" />
++    <option name="LAST_COMMIT_MESSAGE" value="fonctions" />
++  </component>
++  <component name="XDebuggerManager">
++    <breakpoint-manager>
++      <breakpoints>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/main.py</url>
++          <line>331</line>
++          <option name="timeStamp" value="1" />
++        </line-breakpoint>
++      </breakpoints>
++    </breakpoint-manager>
++  </component>
++</project>
+\ No newline at end of file
