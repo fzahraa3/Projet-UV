@@ -1,4 +1,3 @@
-
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -403,16 +402,125 @@ temps = np.arange(1,25)
 #energie
 energie = irradiance_abs_sans_creme * temps
 
-#Données à représenter
-x = temps
-y = energie
-plt.plot(x,y)
-plt.title("Évolution des dommages cutanés en fonction du temps")
-plt.xlabel("Temps (h)")
-plt.ylabel("Énergie absorbée par la peau (J)")
-plt.grid(True)
+
+
+#GRAPHIQUES
+#a) Les abcisses (variable de temps). Nous voulons isoler les valeurs entre le lever et le coucher du soleil car elles sont les plus
+# pertinentes
+# 1 - CONSTANTES LOCALES
+
+phi = math.radians(latitude)
+delta = math.radians(declinaison_s)
+
+
+long_standard = utc_offset * 15
+# 2 - COURBE SUR 24h
+heures = []
+angles = []
+for t in range(heure*3600, 24 * 3600):  # 24h en secondes
+   heure = t / 3600
+   # heure solaire
+   heure_solaire = heure + (4 * (longitude - long_standard)) / 60
+   # angle horaire
+   angle_horaire = 15 * (heure_solaire - 12)
+   omega = math.radians(angle_horaire)
+   # élévation solaire
+   sin_h = (math.sin(phi) * math.sin(delta) +
+            math.cos(phi) * math.cos(delta) * math.cos(omega))
+   sin_h = max(-1, min(1, sin_h))  # sécurité numérique
+
+
+   angle = math.degrees(math.asin(sin_h))
+
+
+   heures.append(heure)
+   angles.append(angle)
+
+
+# =========================
+# 3 - CALCUL LEVER / COUCHER
+
+
+cos_omega = -math.tan(phi) * math.tan(delta)
+cos_omega = max(-1, min(1, cos_omega))
+
+omega = math.degrees(math.acos(cos_omega))
+
+heure_coucher = 12 + omega / 15
+
+
+# 4 - FILTRAGE (zone jour)
+# =========================
+
+
+x_heures = []
+x_angles = []
+
+
+for h, a in zip(heures, angles):
+
+
+   if  h <= heure_coucher:
+       x_heures.append(h)
+       x_angles.append(a)
+
+#Ici, nous avons procédé en deux étapes. Premièrement, nous avons défini un intervalle de temps allant de 0 à 24 heures,
+# discrétisé en secondes. Ensuite, nous avons calculé l’angle solaire associé à chaque instant de la journée et avons stocké ces valeurs dans deux listes intermédiaires.
+#Dans un second temps, nous avons appliqué un filtre en ne conservant que les valeurs de l’angle solaire supérieures ou égales à zéro.
+# Cela correspond aux périodes où le Soleil est au-dessus de l’horizon, c’est-à-dire entre le lever et le coucher du Soleil.
+
+#CALCUL IRRADIANCE  (en fonction du temps)
+
+
+# 1. On crée une liste vide pour stocker nos résultats
+irradiances_par_seconde = []
+irradiance_max = indice_uv * 0.025  # Puissance max au zénith
+
+# 2. On parcourt la liste des angles que tu as déjà calculée
+for i in range(len(x_angles)):                     #Ici nous avions deja creer une liste avec tt les ngle de la journée. on l'utilise pr retrouver l'irradiance
+    angle_actuel = x_angles[i]
+
+    # Si le soleil est au-dessus de l'horizon
+    if angle_actuel > 0:
+        # On calcule le sinus de l'angle (en radians)
+        sin_h = math.sin(math.radians(angle_actuel))
+
+        # On calcule l'irradiance pour cette seconde précise
+        irr_inst = irradiance_max * sin_h
+        irradiances_par_seconde.append(irr_inst)
+    else:
+        # Si le soleil est couché, l'irradiance est de 0
+        irradiances_par_seconde.append(0.0)
+
+
+#LISTE POUR L'ÉNERGIE
+
+
+# LISTE POUR L'ÉNERGIE (Ordonnées pour le graphique)
+energie_cumulee = []
+somme_temporaire = 0.0
+
+# On utilise range(len(...)) pour parcourir l'indice k
+for k in range(len(irradiances_par_seconde)):
+    # On ajoute l'irradiance de la seconde actuelle à notre total
+    # Énergie = Irradiance * 1 seconde, donc on ajoute juste la valeur
+    somme_temporaire = somme_temporaire + irradiances_par_seconde[k]
+
+    # On ajoute ce cumul dans notre liste d'ordonnées
+    energie_cumulee.append(somme_temporaire)
+
+# Maintenant tu as tes deux listes pour ton graphique :
+# Abscisses (X) : x_heures
+# Ordonnées (Y) : energie_cumulee
+
+print("Ta liste d'énergie est prête pour le graphique !")
+
+import matplotlib.pyplot as plt
+
+plt.plot(x_heures, energie_cumulee)
+plt.title("Énergie solaire accumulée sur la peau")
+plt.xlabel("Heure de la journée (heures)")
+plt.ylabel("Énergie totale (J/m²)")
 plt.show()
-
-
 
 
