@@ -406,13 +406,57 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
 irradiance_finale = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
 
+#Préparation des listes pour les graphiques
+#a)- liste des heures de la journée (abcisses du graphique)
 
+x_heures = []
+angles_correspondants = []  #angle que fait le soleil avec l'horizon selon les heures de la journée (0-24h)
 
+inclinaison = declinaison_solaire(nombre_jour) #composante necessaire au calcul de l'angle entre le soleil et l'horizon
 
+for t in range(0, 24 * 3600):
+    heure_actuelle = t / 3600
 
+    #calcul pour trouver tout les angles que fait le soleil avec l'horizon durant l'entiereté de la journée
+    h_horaire = angle_horaire(heure_actuelle, longitude, utc_offset)
+    a_solaire = angle_solaire(latitude, inclinaison, h_horaire)
 
+    #On ne garde que la période de jour (entre lever et coucher, donc les angles plus grands que zéro)
+    if a_solaire > 0:
+        x_heures.append(heure_actuelle)
+        angles_correspondants.append(a_solaire)
 
+#b) Liste des ordonnées
+#liste pour stocker toute les irradiances de 0 a 24 heures
+energie_cumulee = []
+somme_temporaire = 0.0
+albedo_choisi = albedos[phototype_index]
 
+for i in range(len(angles_correspondants)):      #calcul de l'irradince durant la journée grâce à la liste des angles ( repris par '' i '' )
+    angle_actuel = angles_correspondants[i]
+    irradiance_totale = indice_uv * 0.025        #calcul de l'irradiance qui arrive sur terre  partir de l'UV donné sur méteomedia
+    sin_h = math.sin(math.radians(angle_actuel))
+
+    #On prend en compte l'albédo (énergie absorbée par la peau)
+    irr_abs = irradiance_totale * sin_h * (1 - albedo_choisi)
+    somme_temporaire = somme_temporaire + irr_abs               #Cumul de l'énergie (Joules/m²). pour chaque seconde qui passe, la peau absorbe une irradiance de plus. donc on additionne, on ajoute la valeur a la liste et on recommence pour la seconde suivante
+
+    # 3. On stocke le résultat pour le graphique
+    energie_cumulee.append(somme_temporaire)
+
+#AFFICHAGE DU GRAPHIQUE
+
+#On définit la taille de la figure pour qu'elle soit bien lisible
+plt.figure(figsize=(10, 6))
+
+# Création de la courbe : x_heures en abscisses, energie_cumulee en ordonnées
+plt.plot(x_heures, energie_cumulee, color='orange', linewidth=2.5, label="Énergie cumulée")
+plt.title("Évolution de l'énergie solaire absorbée au fil de la journée", fontsize=14)
+plt.xlabel("Heure de la journée sur votre montre (heures)", fontsize=12)
+plt.ylabel("Énergie totale accumulée (J/m²)", fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.xlim(min(x_heures), max(x_heures))
+plt.show()
 
 
 
