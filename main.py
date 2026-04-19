@@ -414,7 +414,8 @@ angles_correspondants = []  #angle que fait le soleil avec l'horizon selon les h
 
 inclinaison = declinaison_solaire(nombre_jour) #composante necessaire au calcul de l'angle entre le soleil et l'horizon
 
-for t in range(0, 24 * 3600):
+heure_depart = heure * 3600
+for t in range(heure_depart, 24 * 3600):
     heure_actuelle = t / 3600
 
     #calcul pour trouver tout les angles que fait le soleil avec l'horizon durant l'entiereté de la journée
@@ -459,6 +460,44 @@ plt.xlim(min(x_heures), max(x_heures))
 plt.show()
 
 
+seuil_phototypes = [150, 250, 300, 400, 600, 900] #valeurs seuils de chaque phototype (avec source)
+med = seuil_phototypes[phototype_index] #MED: Minimal Erythema Dose, correspond à la dose minimale d'UV causant une brulûre
+
+x = np.array(x_heures)
+ratio = np.array(energie_cumulee) / med
+
+couleurs = ["green", "yellow", "orange", "red", "darkred"]
+
+#Cette fonction transforme les ratios en catégorie
+def niveau(r):
+    if r < 0.25:
+        return 0 #si l'utilisateur est à moins de 25% de la brulûre: aucun danger
+    elif r < 0.5:
+        return 1
+    elif r < 1:
+        return 2
+    elif r < 2:
+        return 3
+    else:
+        return 4
+
+#Création du graphique
+plt.figure(figsize=(10,6))
+
+#Construction de la courbe colorée
+for i in range(len(x) - 1): #on parcourt chaque segment de temps (chaque mini-ligne utilisée pour couper la courbe en morceaux pour permettre de délimiter les couleurs selon les niveaux)
+    n = niveau(ratio[i])
+    # Trace un petit segment de la courbe entre deux points consécutifs. La couleur dépend du niveau de brûlure à cet instant
+    plt.plot(x[i:i+2], ratio[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points
+
+plt.title("Risque de brûlure solaire")
+plt.xlabel("Heure")
+plt.xlim(min(x_heures), max(x_heures))
+plt.xticks(np.arange(min(x_heures), max(x_heures)+0.5, 0.5))
+plt.ylabel("Niveau de brûlure")
+plt.yticks([0, 0.25, 0.5, 1, 2],["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
+plt.grid(True,linestyle='--', alpha=0.6)
+plt.show()
 
 
 
