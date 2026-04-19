@@ -375,14 +375,16 @@ def irradiance_absorbee (indice_uv, angle_solaire_deg, albedo):
     return irradiance_totale * math.sin(angle_solaire_rad) * (1-albedo)
 
 #On appelle la fonction
+
 irradiance_abs_sans_creme = irradiance_absorbee(indice_uv, angle_solaire_deg, albedos[phototype_index])
+
 
 def scenarios_creme_solaire (irradiance_abs_sans_creme):
     SPF_MIN = 30  # la valeur de SPF minimale recommandé est 30
     # Cas où le soleil est sous l'horizon
     if irradiance_abs_sans_creme == 0:
         print("Le soleil est sous l'horizon: aucune exposition UV!")
-        return 0,SPF_MIN
+        return 0,SPF_MIN, "non"
 
     creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
 
@@ -396,7 +398,7 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
         difference = irradiance_abs_sans_creme - irradiance_abs_avec_creme
         print(f"\nSuper ! Avec votre crème solaire de SPF {SPF}, l'intensité des UV reçue est réduite de {round(difference, 3)} W/m².")
         print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme, 3)} W/m².")
-        return irradiance_abs_avec_creme, SPF
+        return irradiance_abs_avec_creme, SPF, "oui"
 
     #Cas où la crème solaire n'est pas utilisée
     else:
@@ -404,10 +406,10 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
         difference = irradiance_abs_sans_creme - irradiance_spf_min
         print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
         print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
-        return irradiance_abs_sans_creme, SPF_MIN
+        return irradiance_abs_sans_creme, SPF_MIN, "non"
 
-irradiance_finale, SPF = scenarios_creme_solaire(irradiance_abs_sans_creme)
-
+#on apelle les fonctions
+irradiance_finale, SPF, creme_solaire = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
 #Préparation des listes pour les graphiques
 
@@ -428,22 +430,35 @@ energie_cumulee_avec_creme = []
 somme_sans = 0.0
 somme_avec = 0.0
 
-facteur_reduction = 1 / SPF
+#LES SPFS
+
+if creme_solaire == "oui":
+    SPF_utilisateur = SPF          #s'il inscrit le spf
+else :
+    SPF_utilisateur = 30          #s'il ne l'inscrit pas
+
 
 
 for ang in angles_correspondants:
     irr_brute = (indice_uv * 0.025) * math.sin(math.radians(ang)) * (1 - albedos[phototype_index])
     somme_sans += irr_brute * 600              #car on avance de dix minute, donc on ajoute lenergie cumulée en dix minutes
-    somme_avec += (irr_brute * facteur_reduction)*600
+    somme_avec += (irr_brute / SPF_utilisateur )*600
     energie_cumulee.append(somme_sans)
     energie_cumulee_avec_creme.append(somme_avec)
 
 # GRAPHIQUE 1 et 2 (Combinés pour comparaison)
-plt.figure(figsize=(10, 6))
-plt.plot(x_heures, energie_cumulee, color='red', label="Énergie cumulée par votre peau sans crème de protection")
-plt.plot(x_heures, energie_cumulee_avec_creme, color='green', label="Énergie cumulée par votre peau avec crème de protection")
-plt.title("Énergie solaire cumulée absorbée au fil de la journée")
 
+plt.figure(figsize=(10, 6))
+
+plt.plot(x_heures, energie_cumulee, color='red', label="Énergie cumulée par votre peau sans crème de protection")
+if creme_solaire == "oui":
+    plt.plot(x_heures, energie_cumulee_avec_creme, color='green',
+             label="Énergie cumulée par votre peau avec crème de protection")
+else :
+    plt.plot(x_heures, energie_cumulee_avec_creme, color='green',
+             label="Énergie cumulée par votre peau si vous aviez mis une crème de protection minimal")
+
+plt.title("Énergie solaire cumulée absorbée au fil de la journée")
 plt.xlabel("Moment de la journée (heures)")
 plt.ylabel("Énergie accumulée (J/m²)")
 plt.legend()
