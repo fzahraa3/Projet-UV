@@ -432,20 +432,23 @@ for t in range(heure_depart, 24 * 3600):
 energie_cumulee = []
 somme_temporaire = 0.0
 albedo_choisi = albedos[phototype_index]
+energie_cumulee_avec_creme = []
 
 for i in range(len(angles_correspondants)):      #calcul de l'irradince durant la journée grâce à la liste des angles ( repris par '' i '' )
+
     angle_actuel = angles_correspondants[i]
     irradiance_totale = indice_uv * 0.025        #calcul de l'irradiance qui arrive sur terre  partir de l'UV donné sur méteomedia
     sin_h = math.sin(math.radians(angle_actuel))
-
     #On prend en compte l'albédo (énergie absorbée par la peau)
     irr_abs = irradiance_totale * sin_h * (1 - albedo_choisi)
     somme_temporaire = somme_temporaire + irr_abs               #Cumul de l'énergie (Joules/m²). pour chaque seconde qui passe, la peau absorbe une irradiance de plus. donc on additionne, on ajoute la valeur a la liste et on recommence pour la seconde suivante
-
+    # Irradiance avec protection
+    irr_abs_creme = irr_abs / spf_comparaison
+    somme_avec_creme += irr_abs_creme
     # 3. On stocke le résultat pour le graphique
     energie_cumulee.append(somme_temporaire)
-
-#AFFICHAGE DU GRAPHIQUE
+    energie_cumulee_avec_creme.append(somme_avec_creme)
+#AFFICHAGE DU GRAPHIQUE (sans creme solaire)
 
 #On définit la taille de la figure pour qu'elle soit bien lisible
 plt.figure(figsize=(10, 6))
@@ -457,6 +460,11 @@ plt.xlabel("Heure de la journée sur votre montre (heures)", fontsize=12)
 plt.ylabel("Énergie totale accumulée (J/m²)", fontsize=12)
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.xlim(min(x_heures), max(x_heures))
+
+#AFFICHAGE DU GRAPHIQUE( Avec creme solaire)
+plt.figure(figsize=(10, 6))
+plt.plot(x_heures, energie_cumulee_AVEC, color='green', linewidth=2, label=f"AVEC protection (SPF {spf_comparaison})")
+plt.legend(["Accumulation de l'energie sans crème solaire",  "Accumulation de l'énergie avec crème solaire"])
 plt.show()
 
 
