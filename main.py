@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 #Coordonnées terrestres des pays (prises directement d'Internet )
+
 countries = {
     "afghanistan": (33.0, 65.0, 4.5),
     "afrique du sud": (-30.0, 25.0, 2.0),
@@ -379,7 +380,7 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
     # Cas où le soleil est sous l'horizon
     if irradiance_abs_sans_creme == 0:
         print("Le soleil est sous l'horizon: aucune exposition UV!")
-        return 0
+        return 0,1
 
     creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
 
@@ -393,7 +394,7 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
         difference = irradiance_abs_sans_creme - irradiance_abs_avec_creme
         print(f"\nSuper ! Avec votre crème solaire de SPF {SPF}, l'intensité des UV reçue est réduite de {round(difference, 3)} W/m².")
         print(f"\nLe soleil frappe donc votre peau avec une intensité d'environ {round(irradiance_abs_avec_creme, 3)} W/m².")
-        return irradiance_abs_avec_creme
+        return irradiance_abs_avec_creme, SPF
 
     #Cas où la crème solaire n'est pas utilisée
     else:
@@ -401,103 +402,88 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
         difference = irradiance_abs_sans_creme - irradiance_spf_min
         print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
         print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
-        return irradiance_abs_sans_creme
+        return irradiance_abs_sans_creme, 1
 
-irradiance_finale = scenarios_creme_solaire(irradiance_abs_sans_creme)
+irradiance_finale, SPF = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
 
 #Préparation des listes pour les graphiques
-#a)- liste des heures de la journée (abcisses du graphique)
 
+# Préparation graphique
 x_heures = []
-angles_correspondants = []  #angle que fait le soleil avec l'horizon selon les heures de la journée (0-24h)
-
-inclinaison = declinaison_solaire(nombre_jour) #composante necessaire au calcul de l'angle entre le soleil et l'horizon
-
+angles_correspondants = []
 heure_depart = heure * 3600
-for t in range(heure_depart, 24 * 3600):
-    heure_actuelle = t / 3600
 
-    #calcul pour trouver tout les angles que fait le soleil avec l'horizon durant l'entiereté de la journée
-    h_horaire = angle_horaire(heure_actuelle, longitude, utc_offset)
-    a_solaire = angle_solaire(latitude, inclinaison, h_horaire)
+for t in range(heure_depart, 24 * 3600, 600): #saut de 10 min pour faciliter
+    h_act = t / 3600
+    ang = angle_solaire(latitude, inclinaison, angle_horaire(h_act, longitude, utc_offset))
+    if ang > 0:
+        x_heures.append(h_act)
+        angles_correspondants.append(ang)
 
-    #On ne garde que la période de jour (entre lever et coucher, donc les angles plus grands que zéro)
-    if a_solaire > 0:
-        x_heures.append(heure_actuelle)
-        angles_correspondants.append(a_solaire)
-
-#b) Liste des ordonnées
-#liste pour stocker toute les irradiances de 0 a 24 heures
 energie_cumulee = []
-somme_temporaire = 0.0
-somme_avec_creme = 0.0
-albedo_choisi = albedos[phototype_index]
 energie_cumulee_avec_creme = []
+somme_sans = 0.0
+somme_avec = 0.0
 
-for i in range(len(angles_correspondants)):      #calcul de l'irradince durant la journée grâce à la liste des angles ( repris par '' i '' )
+facteur_reduction = 1 / SPF
 
-    angle_actuel = angles_correspondants[i]
-    irradiance_totale = indice_uv * 0.025        #calcul de l'irradiance qui arrive sur terre  partir de l'UV donné sur méteomedia
-    sin_h = math.sin(math.radians(angle_actuel))
-    #On prend en compte l'albédo (énergie absorbée par la peau)
-    irr_abs = irradiance_totale * sin_h * (1 - albedo_choisi)
-    somme_temporaire = somme_temporaire + irr_abs               #Cumul de l'énergie (Joules/m²). pour chaque seconde qui passe, la peau absorbe une irradiance de plus. donc on additionne, on ajoute la valeur a la liste et on recommence pour la seconde suivante
-    # Irradiance avec protection
-    irr_abs_creme = irradiance_abs_sans_creme(irr_abs)
-    somme_avec_creme += irr_abs_creme
-    # 3. On stocke le résultat pour le graphique
-    energie_cumulee.append(somme_temporaire)
-    energie_cumulee_avec_creme.append(somme_avec_creme)
-#AFFICHAGE DU GRAPHIQUE (sans creme solaire)
 
-#On définit la taille de la figure pour qu'elle soit bien lisible
+for ang in angles_correspondants:
+    irr_brute = (indice_uv * 0.025) * math.sin(math.radians(ang)) * (1 - albedos[phototype_index])
+    somme_sans += irr_brute * 600              #car on avance de dix minute, donc on ajoute lenergie cumulée en dix minutes
+    somme_avec += (irr_brute * facteur_reduction)*600
+    energie_cumulee.append(somme_sans)
+    energie_cumulee_avec_creme.append(somme_avec)
+
+# GRAPHIQUE 1 et 2 (Combinés pour comparaison)
 plt.figure(figsize=(10, 6))
+plt.plot(x_heures, energie_cumulee, color='blue', label="Énergie cumulée par l'utilisateur sans crème de protection")
+plt.plot(x_heures, energie_cumulee_avec_creme, color='red', label="Énergie cumulée par l'utilisateur avec crème de protection")
+plt.title("Énergie solaire cumulée absorbée au fil de la journée")
 
-# Création de la courbe : x_heures en abscisses, energie_cumulee en ordonnées
-plt.plot(x_heures, energie_cumulee, color='orange', linewidth=2.5, label="Énergie cumulée")
-plt.title("Évolution de l'énergie solaire absorbée au fil de la journée", fontsize=14)
-plt.xlabel("Heure de la journée sur votre montre (heures)", fontsize=12)
-plt.ylabel("Énergie totale accumulée (J/m²)", fontsize=12)
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.xlim(min(x_heures), max(x_heures))
-
-#AFFICHAGE DU GRAPHIQUE( Avec creme solaire)
-plt.figure(figsize=(10, 6))
-plt.plot(x_heures, energie_cumulee_avec_creme, color='green', linewidth=2, label=f"AVEC protection (SPF)")
-plt.legend(["Accumulation de l'energie sans crème solaire",  "Accumulation de l'énergie avec crème solaire"])
+plt.xlabel("Moment de la journée (heures)")
+plt.ylabel("Énergie accumulée (J/m²)")
+plt.legend()
+plt.grid(True)
 plt.show()
 
-
+#GRAPHIQUE NIVEAUX BRULURE
 seuil_phototypes = [150, 250, 300, 400, 600, 900] #valeurs seuils de chaque phototype (avec source)
 med = seuil_phototypes[phototype_index] #MED: Minimal Erythema Dose, correspond à la dose minimale d'UV causant une brulûre
+
 
 x = np.array(x_heures)
 ratio = np.array(energie_cumulee) / med
 
+
 couleurs = ["green", "yellow", "orange", "red", "darkred"]
 
+#GRAPHIQUE RISQUE
 #Cette fonction transforme les ratios en catégorie
 def niveau(r):
-    if r < 0.25:
-        return 0 #si l'utilisateur est à moins de 25% de la brulûre: aucun danger
-    elif r < 0.5:
-        return 1
-    elif r < 1:
-        return 2
-    elif r < 2:
-        return 3
-    else:
-        return 4
+   if r < 0.25:
+       return 0 #si l'utilisateur est à moins de 25% de la brulûre: aucun danger
+   elif r < 0.5:
+       return 1
+   elif r < 1:
+       return 2
+   elif r < 2:
+       return 3
+   else:
+       return 4
+
 
 #Création du graphique
 plt.figure(figsize=(10,6))
 
+
 #Construction de la courbe colorée
 for i in range(len(x) - 1): #on parcourt chaque segment de temps (chaque mini-ligne utilisée pour couper la courbe en morceaux pour permettre de délimiter les couleurs selon les niveaux)
-    n = niveau(ratio[i])
-    # Trace un petit segment de la courbe entre deux points consécutifs. La couleur dépend du niveau de brûlure à cet instant
-    plt.plot(x[i:i+2], ratio[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points
+   n = niveau(ratio[i])
+   # Trace un petit segment de la courbe entre deux points consécutifs. La couleur dépend du niveau de brûlure à cet instant
+   plt.plot(x[i:i+2], ratio[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points
+
 
 plt.title("Risque de brûlure solaire")
 plt.xlabel("Heure")
@@ -507,9 +493,5 @@ plt.ylabel("Niveau de brûlure")
 plt.yticks([0, 0.25, 0.5, 1, 2],["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
 plt.grid(True,linestyle='--', alpha=0.6)
 plt.show()
-
-
-
-
 
 
