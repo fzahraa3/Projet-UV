@@ -215,7 +215,10 @@ latitude = countries[pays][0]
 longitude = countries[pays][1]
 
 #année
-annee = input("S'agit-il d'une année bissextile ? (oui/non) : ")
+annee = input("S'agit-il d'une année bissextile ? (oui/non) : ").lower()
+while annee not in ["oui", "non"]:
+    print("Entrée invalide. Veuillez répondre par 'oui' ou 'non'.")
+    annee = input("S'agit-il d'une année bissextile ? (oui/non) : ").lower()
 
 #Entrée de la date par l'utilisateur (heure et mois)
 
@@ -375,11 +378,11 @@ def irradiance_absorbee (indice_uv, angle_solaire_deg, albedo):
 irradiance_abs_sans_creme = irradiance_absorbee(indice_uv, angle_solaire_deg, albedos[phototype_index])
 
 def scenarios_creme_solaire (irradiance_abs_sans_creme):
-    SPF = 30  # la valeur de SPF minimale recommandé est 30
+    SPF_MIN = 30  # la valeur de SPF minimale recommandé est 30
     # Cas où le soleil est sous l'horizon
     if irradiance_abs_sans_creme == 0:
         print("Le soleil est sous l'horizon: aucune exposition UV!")
-        return 0,1
+        return 0,SPF_MIN
 
     creme_solaire = input("Utilisez-vous de la crème solaire ? (oui/non) : ").lower()
 
@@ -397,11 +400,11 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
 
     #Cas où la crème solaire n'est pas utilisée
     else:
-        irradiance_spf_min = irradiance_abs_sans_creme / SPF
+        irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
         difference = irradiance_abs_sans_creme - irradiance_spf_min
-        print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
+        print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
         print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
-        return irradiance_abs_sans_creme, 1
+        return irradiance_abs_sans_creme, SPF_MIN
 
 irradiance_finale, SPF = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
@@ -437,8 +440,8 @@ for ang in angles_correspondants:
 
 # GRAPHIQUE 1 et 2 (Combinés pour comparaison)
 plt.figure(figsize=(10, 6))
-plt.plot(x_heures, energie_cumulee, color='blue', label="Énergie cumulée par l'utilisateur sans crème de protection")
-plt.plot(x_heures, energie_cumulee_avec_creme, color='red', label="Énergie cumulée par l'utilisateur avec crème de protection")
+plt.plot(x_heures, energie_cumulee, color='red', label="Énergie cumulée par votre peau sans crème de protection")
+plt.plot(x_heures, energie_cumulee_avec_creme, color='green', label="Énergie cumulée par votre peau avec crème de protection")
 plt.title("Énergie solaire cumulée absorbée au fil de la journée")
 
 plt.xlabel("Moment de la journée (heures)")
@@ -453,7 +456,8 @@ med = seuil_phototypes[phototype_index] #MED: Minimal Erythema Dose, correspond 
 
 
 x = np.array(x_heures)
-ratio = np.array(energie_cumulee) / med
+ratio_sans_creme = np.array(energie_cumulee) / med
+ratio_avec_creme = np.array(energie_cumulee_avec_creme)/med
 
 
 couleurs = ["green", "yellow", "orange", "red", "darkred"]
@@ -479,9 +483,13 @@ plt.figure(figsize=(10,6))
 
 #Construction de la courbe colorée
 for i in range(len(x) - 1): #on parcourt chaque segment de temps (chaque mini-ligne utilisée pour couper la courbe en morceaux pour permettre de délimiter les couleurs selon les niveaux)
-   n = niveau(ratio[i])
+   n = niveau(ratio_sans_creme[i])
    # Trace un petit segment de la courbe entre deux points consécutifs. La couleur dépend du niveau de brûlure à cet instant
-   plt.plot(x[i:i+2], ratio[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points
+   plt.plot(x[i:i+2], ratio_sans_creme[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points
+
+for i in range(len(x) - 1):
+    n = niveau(ratio_avec_creme[i])
+    plt.plot(x[i:i+2], ratio_avec_creme[i:i+2],color=couleurs[n],linewidth=2,linestyle='--'  )
 
 
 plt.title("Risque de brûlure solaire")
@@ -491,6 +499,9 @@ plt.xticks(np.arange(min(x_heures), max(x_heures)+0.5, 0.5))
 plt.ylabel("Niveau de brûlure")
 plt.yticks([0, 0.25, 0.5, 1, 2],["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
 plt.grid(True,linestyle='--', alpha=0.6)
+plt.plot([], [], color='black', linewidth=2, label="Sans crème de protection")
+plt.plot([], [], color='black', linestyle='--', linewidth=2, label="Avec crème de protection")
+plt.legend()
 plt.show()
 
 
