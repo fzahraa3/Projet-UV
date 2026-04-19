@@ -374,8 +374,7 @@ def irradiance_absorbee (indice_uv, angle_solaire_deg, albedo):
 irradiance_abs_sans_creme = irradiance_absorbee(indice_uv, angle_solaire_deg, albedos[phototype_index])
 
 def scenarios_creme_solaire (irradiance_abs_sans_creme):
-    SPF_MIN = 30  # la valeur de SPF minimale recommandé est 30
-
+    SPF = 30  # la valeur de SPF minimale recommandé est 30
     # Cas où le soleil est sous l'horizon
     if irradiance_abs_sans_creme == 0:
         print("Le soleil est sous l'horizon: aucune exposition UV!")
@@ -397,9 +396,9 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
 
     #Cas où la crème solaire n'est pas utilisée
     else:
-        irradiance_spf_min = irradiance_abs_sans_creme / SPF_MIN
+        irradiance_spf_min = irradiance_abs_sans_creme / SPF
         difference = irradiance_abs_sans_creme - irradiance_spf_min
-        print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF_MIN}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
+        print(f"\nSi vous aviez appliqué une crème solaire de SPF {SPF}, l'intensité des UV aurait été réduite de {round(difference, 3)} W/m²! Pas mal, non ?")
         print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
         return irradiance_abs_sans_creme
 
