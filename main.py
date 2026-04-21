@@ -380,7 +380,7 @@ irradiance_abs_sans_creme = irradiance_absorbee(indice_uv, angle_solaire_deg, al
 
 
 def scenarios_creme_solaire (irradiance_abs_sans_creme):
-    SPF_MIN = 30  # la valeur de SPF minimale recommandé est 30
+    SPF_MIN = 30  # la valeur de SPF minimale recommandée est 30
     # Cas où le soleil est sous l'horizon
     if irradiance_abs_sans_creme == 0:
         print("Le soleil est sous l'horizon: aucune exposition UV!")
@@ -408,7 +408,7 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
         print(f"Sans crème, le soleil frappe actuellement votre peau avec une intensité de {round(irradiance_abs_sans_creme, 3)} W/m².")
         return irradiance_abs_sans_creme, SPF_MIN, "non"
 
-#on apelle les fonctions
+#on appelle les fonctions
 irradiance_finale, SPF, creme_solaire = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
 #Préparation des listes pour les graphiques
@@ -456,12 +456,13 @@ if creme_solaire == "oui":
              label="Énergie cumulée par votre peau avec crème de protection")
 else :
     plt.plot(x_heures, energie_cumulee_avec_creme, color='green',
-             label="Énergie cumulée par votre peau si vous aviez mis une crème de protection minimal")
+             label="Énergie cumulée par votre peau si vous aviez mis une crème solaire de SPF 30")
 
 plt.title("Énergie solaire cumulée absorbée au fil de la journée")
 plt.xlabel("Moment de la journée (heures)")
 plt.ylabel("Énergie accumulée (J/m²)")
-plt.legend()
+plt.xlim(min(x_heures), max(x_heures)) #permet d'effacer "l'espace" avant le début de la courbe
+plt.legend(loc = "upper left") #la légende se mettait au milieu du graphique, alors cela permet de la garder en haut à gauche
 plt.grid(True)
 plt.show()
 
@@ -514,9 +515,39 @@ plt.xticks(np.arange(min(x_heures), max(x_heures)+0.5, 0.5))
 plt.ylabel("Niveau de brûlure")
 plt.yticks([0, 0.25, 0.5, 1, 2],["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
 plt.grid(True,linestyle='--', alpha=0.6)
-plt.plot([], [], color='black', linewidth=2, label="Sans crème de protection")
-plt.plot([], [], color='black', linestyle='--', linewidth=2, label="Avec crème de protection")
+#Légende fixe
+plt.plot([], [], color='black', linewidth=2, label="Sans crème solaire")
+#Légende selon le scénario de crème solaire
+if creme_solaire == "oui":
+    plt.plot([], [], color='green', linestyle='--', linewidth=2, label="Avec crème solaire")
+else:
+    plt.plot([], [], color='green', linestyle='--', linewidth=2, label="Avec crème solaire de SPF 30")
+
 plt.legend()
 plt.show()
+
+#Calculer le temps maximal:
+temps_max = None
+
+#choisit la bonne courbe selon l'utilisateur
+if creme_solaire == "oui":
+    energie_utilisee = energie_cumulee_avec_creme
+else:
+    energie_utilisee = energie_cumulee
+#repère le temps auquel le seuil est atteint ou dépassé
+for i in range(len(x_heures)):
+    if energie_utilisee[i] >= med:
+        temps_max = x_heures[i]
+        break #sort de la boucle dès qu'il a trouvé la première valeur qui satisfait cette condition
+
+#calcul du temps que l'utilisateur peut passer dehors
+temps_exposition = temps_max - heure_depart
+
+#affichage des messages selon le scénario
+if temps_max is None:
+    print("Vous ne dépassez jamais le seuil de brulûre!")
+else:
+    print("Le temps maximal que vous pouvez passer dehors est de:", round(temps_exposition, 2),"h.")
+
 
 
