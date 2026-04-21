@@ -470,7 +470,7 @@ plt.show()
 seuil_phototypes = [150, 250, 300, 400, 600, 900] #valeurs seuils de chaque phototype (avec source)
 med = seuil_phototypes[phototype_index] #MED: Minimal Erythema Dose, correspond à la dose minimale d'UV causant une brulûre
 
-
+#axe des heures (abscisses)
 x = np.array(x_heures)
 ratio_sans_creme = np.array(energie_cumulee) / med
 ratio_avec_creme = np.array(energie_cumulee_avec_creme)/med
@@ -483,7 +483,7 @@ couleurs = ["green", "yellow", "orange", "red", "darkred"]
 def niveau(r):
    if r < 0.25:
        return 0 #si l'utilisateur est à moins de 25% de la brulûre: aucun danger
-   elif r < 0.5:
+   elif r < 0.5: #début d'exposition légère
        return 1
    elif r < 1:
        return 2
@@ -540,13 +540,13 @@ for i in range(len(x_heures)):
         temps_max = x_heures[i]
         break #sort de la boucle dès qu'il a trouvé la première valeur qui satisfait cette condition
 
-#calcul du temps que l'utilisateur peut passer dehors
-temps_exposition = temps_max - heure_depart
-
 #affichage des messages selon le scénario
 if temps_max is None:
     print("Vous ne dépassez jamais le seuil de brulûre!")
 else:
+    # calcul du temps que l'utilisateur peut passer dehors
+    heure_start = heure_depart/3600
+    temps_exposition = temps_max - heure_start
     print("Le temps maximal que vous pouvez passer dehors est de:", round(temps_exposition, 2),"h.")
 
 
