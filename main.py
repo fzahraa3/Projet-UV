@@ -418,28 +418,34 @@ x_heures = []
 angles_correspondants = []
 heure_depart = heure * 3600
 
-for t in range(heure_depart, 24 * 3600, 600): #saut de 10 min pour faciliter
+#point de départ (car énergie cumulée doit commencer à zero)
+x_heures.append(heure)
+angles_correspondants.append(0)
+
+#préparation des listes
+
+for t in range(heure_depart+600, 24 * 3600, 600): #saut de 10 min pour faciliter. On commence a 10min après l'heure d'entrée car la première valeure est associée à une énergie initiale cumulée égale à 0.
     h_act = t / 3600
     ang = angle_solaire(latitude, inclinaison, angle_horaire(h_act, longitude, utc_offset))
     if ang > 0:
         x_heures.append(h_act)
         angles_correspondants.append(ang)
 
-energie_cumulee = []
-energie_cumulee_avec_creme = []
+energie_cumulee = [0,]
+energie_cumulee_avec_creme = [0,]
 somme_sans = 0.0
 somme_avec = 0.0
 
 #LES SPFS
 
 if creme_solaire == "oui":
-    SPF_utilisateur = SPF          #s'il inscrit le spf
+    SPF_utilisateur = SPF          #s'il fournit le spf
 else :
-    SPF_utilisateur = 30          #s'il ne l'inscrit pas
+    SPF_utilisateur = 30          #s'il ne le fournit pas
 
 
-
-for ang in angles_correspondants:
+#Calcul des énergies (cumulatives) entre l'heure entrée et le couché du soleil.
+for ang in angles_correspondants[1:] :         #on parcours la liste en ne prenant pas en compte l'angle égale à zero
     irr_brute = (indice_uv * 0.025) * math.sin(math.radians(ang)) * (1 - albedos[phototype_index])
     somme_sans += irr_brute * 600              #car on avance de dix minute, donc on ajoute lenergie cumulée en dix minutes
     somme_avec += (irr_brute / SPF_utilisateur )*600
