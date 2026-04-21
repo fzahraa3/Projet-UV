@@ -491,7 +491,7 @@ def niveau(r):
        return 0 #si l'utilisateur est à moins de 25% de la brulûre: aucun danger
    elif r < 0.5: #début d'exposition légère
        return 1
-   elif r < 1:
+   elif r < 1:#risque modéré
        return 2
    elif r < 2:
        return 3
@@ -548,7 +548,7 @@ for i in range(len(x_heures)):
 
 #affichage des messages selon le scénario
 if temps_max is None:
-    print("Vous ne dépassez jamais le seuil de brulûre!")
+    print("Vous ne dépassez jamais le seuil de brulûre! Cela signifie que vous pouvez rester dehors jusqu'au coucher du soleil!") #l'énergie cumulée arrête de se calculer au coucher du soleil
 else:
     # calcul du temps que l'utilisateur peut passer dehors
     heure_start = heure_depart/3600
