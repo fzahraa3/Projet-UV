@@ -1,8 +1,7 @@
-
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-#Coordonnées terrestres des pays (prises directement d'Internet )
+#Coordonnées terrestres des pays (prises directement d'Internet)
 
 countries = {
     "afghanistan": (33.0, 65.0, 4.5),
@@ -255,7 +254,7 @@ elif annee.lower() == "non" :
 
 mois = input("Entendu. À quel mois de l'année faisons-nous cette mesure ?")
 
-#Nombre de jour à partir du premier janvier
+#Nombre de jours à partir du premier janvier
 #b) limites pour le mois
 
 while mois.lower() not in repertoire_mois:
@@ -358,7 +357,7 @@ indice_uv = float(input("Veuillez entrer l'indice UV mesuré à votre position g
 
 while indice_uv < 0 or indice_uv > 11:
      indice_uv = float(input("Indice UV invalide. Veuillez entrer une valeur comprise entre 0 et 11 : "))
-
+indice_uv = indice_uv if indice_uv > 0 else 0.1 #force l'effet accumulatif qu'un indice uv de 0 peut avoir (sinon, multiplie simplement 0 dans les calculs)
 
 #Liste des différents albédos selon le phototype
 albedos = [0.42, 0.37, 0.32, 0.27, 0.22, 0.17]
@@ -411,46 +410,56 @@ def scenarios_creme_solaire (irradiance_abs_sans_creme):
 #on appelle les fonctions
 irradiance_finale, SPF, creme_solaire = scenarios_creme_solaire(irradiance_abs_sans_creme)
 
-#Préparation des listes pour les graphiques
 
-# Préparation graphique
-x_heures = []
-angles_correspondants = []
-heure_depart = heure * 3600
 
-#point de départ (car énergie cumulée doit commencer à zero)
-x_heures.append(heure)
-angles_correspondants.append(0)
+def calcul_angles_graphique(latitude, longitude, utc_offset, inclinaison, heure_depart):
+    # Préparation graphique
+    x_heures = []
+    angles_correspondants = []
 
-#préparation des listes
+    # point de départ (car énergie cumulée doit commencer à zero)
+    x_heures.append(heure_depart)
+    angles_correspondants.append(0)
+    heure_depart_sec = heure_depart * 3600
 
-for t in range(heure_depart+600, 24 * 3600, 600): #saut de 10 min pour faciliter. On commence a 10min après l'heure d'entrée car la première valeure est associée à une énergie initiale cumulée égale à 0.
-    h_act = t / 3600
-    ang = angle_solaire(latitude, inclinaison, angle_horaire(h_act, longitude, utc_offset))
-    if ang > 0:
-        x_heures.append(h_act)
-        angles_correspondants.append(ang)
+    # Préparation des listes pour les graphiques
+    for t in range(int(heure_depart_sec) + 600, 24 * 3600, 600): #saut de 10 min pour faciliter. On commence a 10min après l'heure d'entrée car la première valeure est associée à une énergie initiale cumulée égale à 0.
+        h_act = t / 3600
+        ang = angle_solaire(latitude, inclinaison, angle_horaire(h_act, longitude, utc_offset))
+        if ang > 0:
+            x_heures.append(h_act)
+            angles_correspondants.append(ang)
+    return angles_correspondants, x_heures
 
-energie_cumulee = [0,]
-energie_cumulee_avec_creme = [0,]
-somme_sans = 0.0
-somme_avec = 0.0
+#on appelle la fonction
+angles_correspondants, x_heures = calcul_angles_graphique(latitude, longitude, utc_offset, inclinaison, heure)
 
 #LES SPFS
-
 if creme_solaire == "oui":
-    SPF_utilisateur = SPF          #s'il fournit le spf
+    SPF_utilisateur = SPF  #s'il fournit le spf
 else :
-    SPF_utilisateur = 30          #s'il ne le fournit pas
+    SPF_utilisateur = 30   #s'il ne le fournit pas
+
+def calcul_energie_cumulee(angles_correspondants, indice_uv, albedos, phototype_index, SPF_utilisateur):
+    energie_cumulee = [0,]
+    energie_cumulee_avec_creme = [0,]
+    somme_sans = 0.0
+    somme_avec = 0.0
+    #Calcul des énergies (cumulatives) entre l'heure entrée et le coucher du soleil.
+    for ang in angles_correspondants[1:] :         #on parcours la liste en ne prenant pas en compte l'angle égale à zero
+        irr_brute = (indice_uv * 0.025) * math.sin(math.radians(ang)) * (1 - albedos[phototype_index])
+
+        somme_sans += irr_brute * 600              #car on avance de dix minutes, donc on ajoute l'énergie cumulée en dix minutes
+        somme_avec += (irr_brute / SPF_utilisateur )*600
+        energie_cumulee.append(somme_sans)
+        energie_cumulee_avec_creme.append(somme_avec)
+
+    return energie_cumulee, energie_cumulee_avec_creme
 
 
-#Calcul des énergies (cumulatives) entre l'heure entrée et le couché du soleil.
-for ang in angles_correspondants[1:] :         #on parcours la liste en ne prenant pas en compte l'angle égale à zero
-    irr_brute = (indice_uv * 0.025) * math.sin(math.radians(ang)) * (1 - albedos[phototype_index])
-    somme_sans += irr_brute * 600              #car on avance de dix minute, donc on ajoute lenergie cumulée en dix minutes
-    somme_avec += (irr_brute / SPF_utilisateur )*600
-    energie_cumulee.append(somme_sans)
-    energie_cumulee_avec_creme.append(somme_avec)
+energie_cumulee, energie_cumulee_avec_creme = calcul_energie_cumulee(angles_correspondants, indice_uv,albedos,phototype_index,SPF_utilisateur)
+
+
 
 # GRAPHIQUE 1 et 2 (Combinés pour comparaison)
 
@@ -498,16 +507,15 @@ def niveau(r):
    else:
        return 4
 
-
 #Création du graphique
 plt.figure(figsize=(10,6))
 
 
 #Construction de la courbe colorée
 for i in range(len(x) - 1): #on parcourt chaque segment de temps (chaque mini-ligne utilisée pour couper la courbe en morceaux pour permettre de délimiter les couleurs selon les niveaux)
-   n = niveau(ratio_sans_creme[i])
+   n = niveau(ratio_sans_creme[i])#retourne un nombre entre 0 et 4 et ce nombre sert d’indice dans la liste couleurs
    # Trace un petit segment de la courbe entre deux points consécutifs. La couleur dépend du niveau de brûlure à cet instant
-   plt.plot(x[i:i+2], ratio_sans_creme[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points
+   plt.plot(x[i:i+2], ratio_sans_creme[i:i+2], color=couleurs[n], linewidth=2) #x[i:i+2] = sous-liste de 2 points, color = couleur:va chercher la couleur correspondante dans la liste
 
 for i in range(len(x) - 1):
     n = niveau(ratio_avec_creme[i])
@@ -515,12 +523,12 @@ for i in range(len(x) - 1):
 
 
 plt.title("Risque de brûlure solaire")
-plt.xlabel("Heure")
+plt.xlabel("Moment de la journée (heures)")
 plt.xlim(min(x_heures), max(x_heures))
 plt.xticks(np.arange(min(x_heures), max(x_heures)+0.5, 0.5))
 plt.ylabel("Niveau de brûlure")
 plt.yticks([0, 0.25, 0.5, 1, 2],["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
-plt.grid(True,linestyle='--', alpha=0.6)
+plt.grid(True)
 #Légende fixe
 plt.plot([], [], color='black', linewidth=2, label="Sans crème solaire")
 #Légende selon le scénario de crème solaire
@@ -551,9 +559,197 @@ if temps_max is None:
     print("Vous ne dépassez jamais le seuil de brulûre! Cela signifie que vous pouvez rester dehors jusqu'au coucher du soleil!") #l'énergie cumulée arrête de se calculer au coucher du soleil
 else:
     # calcul du temps que l'utilisateur peut passer dehors
-    heure_start = heure_depart/3600
+    heure_start = heure
     temps_exposition = temps_max - heure_start
-    print("Le temps maximal que vous pouvez passer dehors est de:", round(temps_exposition, 2),"h.")
+    transformation_heure = int(temps_exposition)
+    transformation_minute = (temps_exposition - transformation_heure) * 60
+    print("Le temps maximal que vous pouvez passer dehors est de:", round(transformation_heure),"h et", round(transformation_minute),"minutes.")
+
+
+#PARTIE DIFFÉRENTS SCÉNARIOS
+
+#GRAPHIQUE PIRE CAS (ÉGYPTE)
+#On crée des variables avec des valeurs précises
+pays_pire = "égypte"
+#Coordonnées du pays
+latitude_pire = countries[pays_pire][0]
+longitude_pire = countries[pays_pire][1]
+utc_offset_pire = countries[pays_pire][2]
+
+phototype_index_pire = 0  # phototype 1 = index 0
+indice_uv_pire = 11  # pire cas météo (UV max)
+heure_pire = 12   # zénith du soleil (heure la plus ensoleillée)
+
+# Calculs solaires
+inclinaison_pire = declinaison_solaire(172)  # ~21 juin (solstice d'été annuel)
+
+angles_pire, heures_pire = calcul_angles_graphique(latitude_pire, longitude_pire,  utc_offset_pire, inclinaison_pire,heure_pire)
+energie_sans_pire, energie_avec_pire = calcul_energie_cumulee(angles_pire,indice_uv_pire,albedos,phototype_index_pire,30)
+
+x_pire = np.array(heures_pire)
+
+ratio_sans_pire = np.array(energie_sans_pire) / 150  # 150: MED de phototype I
+ratio_avec_pire = np.array(energie_avec_pire) / 150
+
+#Construction du graphique
+plt.figure(figsize=(10,6))
+
+#Sans crème
+for i in range(len(x_pire) - 1):
+    n = niveau(ratio_sans_pire[i])
+    plt.plot(x_pire[i:i+2], ratio_sans_pire[i:i+2], color=couleurs[n], linewidth=2)
+
+#Avec crème
+for i in range(len(x_pire) - 1):
+    n = niveau(ratio_avec_pire[i])
+    plt.plot(x_pire[i:i+2], ratio_avec_pire[i:i+2], color=couleurs[n], linewidth=2, linestyle="--")
+
+
+plt.title("PIRE CAS - Égypte (Phototype I, UV de 11, à partir de midi)")
+plt.xlabel("Moment de la journée (heures)")
+plt.ylabel("Niveau de brûlure")
+plt.xlim(min(x_pire), max(x_pire))
+plt.xticks(np.arange(min(x_pire), max(x_pire)+0.5, 0.5))
+plt.yticks([0, 0.25, 0.5, 1, 2],["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
+plt.grid(True)
+plt.plot([], [], color="black", label="Sans crème")
+plt.plot([], [], color="green", linestyle="--", label="Avec SPF 30")
+plt.legend()
+plt.show()
+
+temps_max_pire = None
+energie_utilisee_pire = energie_sans_pire  # sans crème (pire cas)
+
+for i in range(len(x_pire)):
+    if energie_utilisee_pire[i] >= 150:  # MED phototype I
+        temps_max_pire = x_pire[i]
+        break
+
+if temps_max_pire is None:
+    print("Dans le pire scénario, vous ne dépassez pas le seuil de brûlure avant le coucher du soleil.")
+
+else:
+    temps_exposition_pire = temps_max_pire - heure_pire
+    transformation_heures_pire = int(temps_exposition_pire)
+    transformation_minutes_pire = (temps_exposition_pire - transformation_heures_pire) *60
+    print("PIRE CAS\nTemps maximal qu'une personne de phototype I peut passer à l'extérieur en Égypte, le 21 juin, avec un UV de 11, si elle sort à midi et ne porte pas de crème solaire:", round(transformation_heures_pire), "h et", round(transformation_minutes_pire), "minutes")
+
+#COMPARAISON ÉGYPTE PHOTOTYPE 6
+phototype_index_pire_six = 5 # phototype 6 = index 5
+angles_pire, heures_pire = calcul_angles_graphique(latitude_pire, longitude_pire, utc_offset_pire, inclinaison_pire,heure_pire)
+energie_sans_pire, energie_avec_pire = calcul_energie_cumulee(angles_pire, indice_uv_pire, albedos, phototype_index_pire_six, 30)
+
+x_pire = np.array(heures_pire)
+
+ratio_sans_pire = np.array(energie_sans_pire) / 900  # 900: MED de phototype VI
+ratio_avec_pire = np.array(energie_avec_pire) / 900
+
+# Construction du graphique
+plt.figure(figsize=(10, 6))
+
+# Sans crème
+for i in range(len(x_pire) - 1):
+    n = niveau(ratio_sans_pire[i])
+    plt.plot(x_pire[i:i + 2], ratio_sans_pire[i:i + 2], color=couleurs[n], linewidth=2)
+
+# Avec crème
+for i in range(len(x_pire) - 1):
+    n = niveau(ratio_avec_pire[i])
+    plt.plot(x_pire[i:i + 2], ratio_avec_pire[i:i + 2], color=couleurs[n], linewidth=2, linestyle="--")
+
+plt.title("PIRE CAS - Égypte (Phototype VI, UV de 11, à partir de midi)")
+plt.xlabel("Moment de la journée (heures)")
+plt.ylabel("Niveau de brûlure")
+plt.xlim(min(x_pire), max(x_pire))
+plt.xticks(np.arange(min(x_pire), max(x_pire) + 0.5, 0.5))
+plt.yticks([0, 0.25, 0.5, 1, 2], ["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
+plt.grid(True)
+plt.plot([], [], color="black", label="Sans crème")
+plt.plot([], [], color="green", linestyle="--", label="Avec SPF 30")
+plt.legend()
+plt.show()
+
+temps_max_pire = None
+energie_utilisee_pire = energie_sans_pire  # sans crème (pire cas)
+
+for i in range(len(x_pire)):
+    if energie_utilisee_pire[i] >= 900:  # MED phototype VI
+        temps_max_pire = x_pire[i]
+        break
+
+if temps_max_pire is None:
+    print("Dans le pire scénario, vous ne dépassez pas le seuil de brûlure avant le coucher du soleil.")
+
+else:
+    temps_exposition_pire = temps_max_pire - heure_pire
+    transformation_heures_pire = int(temps_exposition_pire)
+    transformation_minutes_pire = (temps_exposition_pire - transformation_heures_pire) * 60
+    print("\nEt qu'en est-il d'une personne de phototype VI...?\nTemps maximal qu'une personne de phototype VI peut passer à l'extérieur en Égypte, le 21 juin, avec un UV de 11, si elle sort à midi et ne porte pas de crème solaire:",round(transformation_heures_pire), "h et", round(transformation_minutes_pire), "minutes!")
+
+#CAS LE MOINS ENSOLEILLÉ
+#On crée des variables avec des valeurs précises
+pays_meilleur = "islande"
+#Coordonnées du pays
+latitude_meilleur = countries[pays_meilleur][0]
+longitude_meilleur = countries[pays_meilleur][1]
+utc_offset_meilleur = countries[pays_meilleur][2]
+
+phototype_index_meilleur = 0  # phototype 1 = index 0
+indice_uv_meilleur = 0.1 #l'indice uv en Islande le 21 décembre est de 0
+heure_meilleur = 11.5  #heure moyenne du lever du soleil en Islande le 21 décembre
+
+# Calculs solaires
+inclinaison_meilleur = declinaison_solaire(355)  # ~21 juin (solstice d'été annuel)
+phototype_index_moins = 0 # phototype 1 = index 0
+angles_meilleur, heures_meilleur = calcul_angles_graphique(latitude_meilleur, longitude_meilleur, utc_offset_meilleur, inclinaison_meilleur,heure_meilleur)
+energie_sans_meilleur, energie_avec_meilleur = calcul_energie_cumulee(angles_meilleur, indice_uv_meilleur, albedos, phototype_index_meilleur, 30)
+
+x_meilleur = np.array(heures_meilleur)
+
+ratio_sans_meilleur = np.array(energie_sans_meilleur) / 150  # 150: MED de phototype I
+ratio_avec_meilleur = np.array(energie_avec_meilleur) / 150
+
+# Construction du graphique
+plt.figure(figsize=(10, 6))
+
+# Sans crème
+for i in range(len(x_meilleur) - 1):
+    n = niveau(ratio_sans_meilleur[i])
+    plt.plot(x_meilleur[i:i + 2], ratio_sans_meilleur[i:i + 2], color=couleurs[n], linewidth=2)
+
+# Avec crème
+for i in range(len(x_meilleur) - 1):
+    n = niveau(ratio_avec_meilleur[i])
+    plt.plot(x_meilleur[i:i + 2], ratio_avec_meilleur[i:i + 2], color=couleurs[n], linewidth=2, linestyle="--")
+
+plt.title("CAS LE MOINS ENSOLEILLÉ - Islande (Phototype I, UV de 0, à partir de 11h30)")
+plt.xlabel("Moment de la journée (heures)")
+plt.ylabel("Niveau de brûlure")
+plt.xlim(min(x_meilleur), max(x_meilleur))
+plt.xticks(np.arange(min(x_meilleur), max(x_pire) + 0.5, 0.5))
+plt.yticks([0, 0.25, 0.5, 1, 2], ["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
+plt.grid(True)
+plt.plot([], [], color="black", label="Sans crème")
+plt.plot([], [], color="green", linestyle="--", label="Avec SPF 30")
+plt.legend()
+plt.show()
+
+temps_max_meilleur = None
+energie_utilisee_meilleur = energie_sans_meilleur  # sans crème (pire cas)
+
+for i in range(len(x_meilleur)):
+    if energie_utilisee_meilleur[i] >= 150:  # MED phototype I
+        temps_max_meilleur = x_meilleur[i]
+        break
+
+if temps_max_meilleur is None:
+    print("\nDans le scénario le moins ensoleillé, une personne de phototype I peut passer à l'extérieur en Islande, le 21 décembre, avec un UV de 0 qui sort à 11h30 et ne porte pas de crème solaire ne dépassera pas le seuil de brûlure avant le coucher du soleil.")
+
+else:
+    temps_exposition_meilleur = temps_max_meilleur - heure_meilleur
+    transformation_heures_meilleur = int(temps_exposition_meilleur)
+    transformation_minutes_meilleur = (temps_exposition_meilleur - transformation_heures_meilleur) * 60
+    print("\nCAS LE MOINS ENSOLEILLÉ\nTemps maximal qu'une personne de phototype I peut passer à l'extérieur en Islande, le 21 décembre, avec un UV de 0, si elle sort à 11h30 et ne porte pas de crème solaire:",round(transformation_heures_meilleur), "h et", round(transformation_minutes_meilleur), "minutes!")
 
 
 
