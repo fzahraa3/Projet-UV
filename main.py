@@ -1,3 +1,4 @@
+#Imports
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,14 +7,7 @@ from tkinter import messagebox, Frame, Canvas, Scrollbar, LEFT, RIGHT, BOTH, Y, 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
-
-
-# ==========================================
 # 1. DONNÉES GÉOGRAPHIQUES
-# ==========================================
-
-
-
 
 countries = {
   "afghanistan": (33.0, 65.0, 4.5),
@@ -217,18 +211,15 @@ countries = {
 ALBEDOS = [0.42, 0.37, 0.32, 0.27, 0.22, 0.17]
 SEUIL_PHOTOTYPES = [150, 250, 300, 400, 600, 900]
 PHOTOTYPES_TEXT = [
-  "I -  Phototype Celtique - Peau très claire", "II - Phototype Nordique - Peau claire ",
-  "III -Phototype Mixte - Peau claire à brun clair", "IV -  Phototype Méditerranéen - Peau brun clair",
-  "V - Phototype Foncé - Peau brun foncé", "VI - Phototype Très Foncé - Peau brun foncé à noir"
+"I -  Phototype Celtique - Peau très claire",
+"II - Phototype Nordique - Peau claire ",
+"III -Phototype Mixte - Peau claire à brun clair",
+"IV -  Phototype Méditerranéen - Peau brun clair",
+"V - Phototype Foncé - Peau brun foncé",
+"VI - Phototype Très Foncé - Peau brun foncé à noir"
 ]
 
-
-
-
-
-
-
-
+#permet de construire la courbe de niveau de risque
 def niveau_danger(r):
   if r < 0.25:
       return 0
@@ -296,45 +287,66 @@ def effacer_tout():
 
 
 def scenario_egypte():
-  lat, lon, utc = countries["égypte"]
-  idx_uv, h_start, spf = 11, 12, 30
-  inclinaison = declinaison_solaire(172)
-  couleurs = ["green", "yellow", "orange", "red", "darkred"]
-  x_h, angles = [], []
-  for t in range(int(h_start * 3600), 24 * 3600, 600):
-      ang = angle_solaire(lat, inclinaison, angle_horaire(t / 3600, lon, utc))
-      if ang > 0: x_h.append(t / 3600); angles.append(ang)
-  fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 12))
-  plt.subplots_adjust(hspace=0.4)
-  for ax, p_idx, med, title in zip([ax1, ax2], [0, 5], [150, 900], ["Photo I", "Photo VI"]):
-      e_s, e_a = calcul_energie_cumulee(angles, idx_uv, p_idx, spf)
-      r_s, r_a = np.array(e_s) / med, np.array(e_a) / med
-      for i in range(len(x_h) - 1):
-          ax.plot(x_h[i:i + 2], r_s[i:i + 2], color=couleurs[niveau_danger(r_s[i])], linewidth=2)
-          ax.plot(x_h[i:i + 2], r_a[i:i + 2], color=couleurs[niveau_danger(r_a[i])], linewidth=2, linestyle='--')
-      ax.set_title(f"PIRE CAS - Égypte ({title}, UV 11, à partir de midi)")
-      ax.set_xlabel("Moment de la journée (heures)")
-      ax.set_ylabel("Niveau de brûlure")
-      ax.set_yticks([0, 0.25, 0.5, 1, 2])
-      ax.set_yticklabels(["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
-      ax.grid(True)
-      ax.plot([], [], color="black", label="Sans crème")
-      ax.plot([], [], color="green", linestyle="--", label="Avec SPF 30")
-      ax.legend()
+    lat, lon, utc = countries["égypte"]
+    idx_uv, h_start, spf = 11, 12, 30
+    inclinaison = declinaison_solaire(172)
+    couleurs = ["green", "yellow", "orange", "red", "darkred"]
+    x_h, angles = [], []
 
+    # 1. Calcul des angles solaires
+    for t in range(int(h_start * 3600), 24 * 3600, 600):
+        ang = angle_solaire(lat, inclinaison, angle_horaire(t / 3600, lon, utc))
+        if ang > 0: x_h.append(t / 3600); angles.append(ang)
 
-  # Texte d'interprétation basé sur ton code
-  texte = ("PIRE CAS\nUne personne de phototype I à midi sans crème brûlera en environ 0h 15min.\n\n"
-           "COMPARAISON\nUne personne de phototype VI (peau très foncée) mettra environ 1h 30min "
-           "pour atteindre le même seuil dans les mêmes conditions.")
-  # On cache la case Islande, on affiche la case Égypte
-  f_inter_islande.pack_forget()
-  f_inter_egypte.pack(fill="x", pady=5)
-  label_inter_egypte.delete("1.0", tk.END)       #pour que le texte aparaisse SUR la surface qui slide
-  label_inter_egypte.insert(tk.END, texte)
+    # 2. CALCUL DYNAMIQUE DU TEMPS AVANT BRÛLURE (TES CALCULS)
+    resultats_bruts = []
+    for p_idx in [0, 5]:
+        # On utilise ta fonction de calcul d'énergie
+        e_s, _ = calcul_energie_cumulee(angles, idx_uv, p_idx, spf)
+        seuil = SEUIL_PHOTOTYPES[p_idx]
 
+        # On cherche l'index exact où l'énergie accumulée dépasse le seuil
+        t_m = next((x_h[i] for i, v in enumerate(e_s) if v >= seuil), None)
 
-  ajouter_graphique(fig)
+        if t_m:
+            d = t_m - h_start  # Durée en heures décimales
+            resultats_bruts.append(f"{int(d)}h {int((d - int(d)) * 60):02d}min")
+        else:
+            resultats_bruts.append("plus de 10h")
+
+    # 3. Création du graphique
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 12))
+    plt.subplots_adjust(hspace=0.4)
+
+    for ax, p_idx, med, title in zip([ax1, ax2], [0, 5], [SEUIL_PHOTOTYPES[0], SEUIL_PHOTOTYPES[5]],
+                                     ["Photo I", "Photo VI"]):
+        e_s, e_a = calcul_energie_cumulee(angles, idx_uv, p_idx, spf)
+        r_s, r_a = np.array(e_s) / med, np.array(e_a) / med
+        for i in range(len(x_h) - 1):
+            ax.plot(x_h[i:i + 2], r_s[i:i + 2], color=couleurs[niveau_danger(r_s[i])], linewidth=2)
+            ax.plot(x_h[i:i + 2], r_a[i:i + 2], color=couleurs[niveau_danger(r_a[i])], linewidth=2, linestyle='--')
+        ax.set_title(f"PIRE CAS - Égypte ({title}, UV 11, à partir de midi)")
+        ax.set_xlabel("Moment de la journée (heures)")
+        ax.set_ylabel("Niveau de brûlure")
+        ax.set_yticks([0, 0.25, 0.5, 1, 2])
+        ax.set_yticklabels(["Aucun", "Léger", "Modéré", "Sévère", "Très sévère"])
+        ax.grid(True)
+        ax.plot([], [], color="black", label="Sans crème")
+        ax.plot([], [], color="green", linestyle="--", label="Avec SPF 30")
+        ax.legend()
+
+    # 4. MISE À JOUR DU TEXTE AVEC TES RÉSULTATS RÉELS
+    texte = (f"PIRE CAS (Calculé selon tes MED et Albedos)\n"
+             f"Une personne de phototype I à midi sans crème brûlera en environ {resultats_bruts[0]}.\n\n"
+             f"COMPARAISON\n"
+             f"Une personne de phototype VI (peau très foncée) mettra environ {resultats_bruts[1]} "
+             f"pour atteindre son seuil de brûlure ({SEUIL_PHOTOTYPES[5]} J/m²) dans les mêmes conditions.")
+
+    f_inter_islande.pack_forget()
+    f_inter_egypte.pack(fill="x", pady=5)
+    label_inter_egypte.delete("1.0", tk.END)
+    label_inter_egypte.insert(tk.END, texte)
+    ajouter_graphique(fig)
 
 
 
@@ -396,15 +408,9 @@ def scenario_islande():
   ajouter_graphique(fig)
 
 
-
-
-
-
-
-
 def executer_tout():
   try:
-      # --- VALIDATIONS ---
+      #  VALIDATIONS
       # 1. Pays
       p_nom = entry_pays.get().lower().strip()
       if p_nom not in countries:
@@ -419,7 +425,7 @@ def executer_tout():
       except ValueError:
           return messagebox.showwarning("Erreur", "L'heure doit être comprise entre 0 et 23.")
 
-
+       #Indice UV (entre 0 et 11)
       try:
           idx_uv = float(entry_uv.get())
           if not (0 <= idx_uv <= 11): raise ValueError
@@ -436,12 +442,7 @@ def executer_tout():
 
       a_creme = var_creme.get()
 
-
-
-
       spf_val = int(entry_spf.get()) if (a_creme == "Oui" and entry_spf.get()) else 30
-
-
 
 
       mois_dict = {"Janvier": 0, "Février": 31, "Mars": 59, "Avril": 90, "Mai": 120, "Juin": 151, "Juillet": 181,
@@ -449,7 +450,7 @@ def executer_tout():
       n_jour = mois_dict[var_mois.get()] + int(entry_jour.get())
 
 
-      # --- LOGIQUE BISSEXTILE ---
+      # LOGIQUE BISSEXTILE
       if var_bissextile.get() == "Année bissextile":
           est_bissextile = True
           # Si on est après février (jour 59), on ajoute le 29 février au compteur
@@ -459,8 +460,6 @@ def executer_tout():
           est_bissextile = False
 
 
-
-
       inclinaison = declinaison_solaire(n_jour)
       x_h, angles = [], []
       for t in range(int(h_saisie * 3600), 24 * 3600, 600):
@@ -468,33 +467,20 @@ def executer_tout():
           if ang > 0: x_h.append(t / 3600); angles.append(ang)
 
 
-
-
       if not x_h: return messagebox.showinfo("Info", "Le soleil est couché.")
-
-
 
 
       e_s, e_a = calcul_energie_cumulee(angles, idx_uv, photo_idx, spf_val)
       med = SEUIL_PHOTOTYPES[photo_idx]
 
-
-
-
       fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 10))
       plt.subplots_adjust(hspace=0.4)
 
-
-
-
-      # --- GRAPHIQUE 1 : ÉNERGIE ---
+      # GRAPHIQUE 1 : ÉNERGIE
       ax1.plot(x_h, e_s, color='red', label="Sans crème")
       ax1.plot(x_h, e_a, color='green', linestyle='--', label=f"Avec SPF {spf_val}")
-      # Ajout de la ligne MED demandée
+      # Ajout de la ligne correspondant au MED
       ax1.axhline(y=med, color='black', linestyle=':', label="Seuil de brûlure (MED)")
-
-
-
 
       ax1.set_title(f"Énergie solaire absorbée - {p_nom.capitalize()}")
       ax1.set_xlabel("Moment de la journée (heures)")
@@ -502,10 +488,7 @@ def executer_tout():
       ax1.grid(True);
       ax1.legend()
 
-
-
-
-      # --- GRAPHIQUE 2 : RISQUE ---
+      # GRAPHIQUE 2 : RISQUE
       r_s, r_a = np.array(e_s) / med, np.array(e_a) / med
       couleurs = ["green", "yellow", "orange", "red", "darkred"]
       for i in range(len(x_h) - 1):
@@ -524,7 +507,6 @@ def executer_tout():
 
 
 
-
       e_ref = e_a if a_creme == "Oui" else e_s
       t_m = next((x_h[i] for i, v in enumerate(e_ref) if v >= med), None)
       if t_m:
@@ -539,12 +521,8 @@ def executer_tout():
 
 
 
-
-
-
-# ==========================================
 # 4. INITIALISATION UI
-# ==========================================
+
 #COULEURS
 COULEUR_DROITE = "#FFF9E3"  # Beige très pâle (Crème)
 COULEUR_GAUCHE = "#F5E1A4"
@@ -553,8 +531,6 @@ COULEUR_GAUCHE = "#F5E1A4"
 root = tk.Tk()
 root.title("Calculateur d'exposition solaire")
 root.geometry("1100x850")
-
-
 
 
 f_in = Frame(root, width=380, padx=20, bg=COULEUR_GAUCHE)
@@ -568,7 +544,7 @@ entry_pays.pack(pady=2)
 
 
 
-f_d = Frame(f_in, bg="#FFF9E3");                                 #on colorie
+f_d = Frame(f_in, bg="#FFF9E3");                 #on colorie
 f_d.pack()
 entry_jour = tk.Entry(f_d, width=5);
 entry_jour.insert(0, "21");
@@ -583,7 +559,7 @@ tk.OptionMenu(f_d, var_bissextile, "Année non bissextile", "Année bissextile")
 
 
 
-f_h_uv = Frame(f_in, bg="#FFF9E3") ;                              #on colorie
+f_h_uv = Frame(f_in, bg="#FFF9E3") ;
 f_h_uv.pack(pady=5)
 tk.Label(f_h_uv, text="Heure:").pack(side=LEFT);
 entry_heure = tk.Entry(f_h_uv, width=5);
@@ -625,10 +601,10 @@ tk.Button(f_in, text="LANCER LE CALCUL", command=executer_tout, bg="#4CAF50", fg
         highlightbackground="#4CAF50", relief="raised").pack(fill="x", pady=5)
 
 
-# --- SEPARATION ET TITRE SCENARIOS ---
+# SEPARATION ET TITRE SCENARIOS
 tk.Label(f_in, text="").pack() # Un petit espace vide pour respirer
 tk.Label(f_in, text="SCÉNARIOS SPÉCIAUX", font=("Arial", 10, "bold"), fg="black").pack(pady=5)
-# -------------------------------------
+
 
 
 
@@ -649,7 +625,7 @@ label_res_texte.pack()
 
 
 
-# --- CASE INTERPRÉTATION ÉGYPTE ---
+# CASE INTERPRÉTATION ÉGYPTE
 f_inter_egypte = tk.LabelFrame(f_in, text=" INTERPRÉTATION (ÉGYPTE) ", fg="darkred", padx=10, pady=10)
 # Remplacement par tk.Text pour permettre le scroll
 label_inter_egypte = tk.Text(f_inter_egypte, height=5, width=40, font=("Arial", 9), wrap="word", bg="#F5E1A4", relief="flat")
@@ -664,7 +640,7 @@ label_inter_egypte.config(yscrollcommand=scroll_eg.set)
 
 
 
-# --- CASE INTERPRÉTATION ISLANDE ---
+# CASE INTERPRÉTATION ISLANDE
 f_inter_islande = tk.LabelFrame(f_in, text=" INTERPRÉTATION (ISLANDE) ", fg="darkblue", padx=10, pady=10)
 # Remplacement par tk.Text pour permettre le scroll
 label_inter_islande = tk.Text(f_inter_islande, height=5, width=40, font=("Arial", 9), wrap="word", bg="#F5E1A4", relief="flat")
@@ -705,7 +681,7 @@ for widget in f_in.winfo_children():
            widget.configure(bg=COULEUR_GAUCHE)
 
 
-       # Optionnel : Si tu as des cadres imbriqués (f_d, f_h_uv, etc.)
+       # Optionnel : Si on a des cadres imbriqués (f_d, f_h_uv, etc.)
        if isinstance(widget, tk.Frame):
            widget.configure(bg=COULEUR_GAUCHE)
            for sub_widget in widget.winfo_children():

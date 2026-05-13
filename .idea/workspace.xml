@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="00c0d082-3a13-41e6-837e-9866fe87c24a" name="Changes" comment="version finale!" />
+    <list default="true" id="00c0d082-3a13-41e6-837e-9866fe87c24a" name="Changes" comment="version finale!">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -104,7 +107,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778588097349</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="version finale!">
+      <option name="closed" value="true" />
+      <created>1778588142344</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1778588142344</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -112,6 +123,7 @@
     <MESSAGE value="sarah i believe in you" />
     <MESSAGE value="allez hop c la bonne fatima" />
     <MESSAGE value="code avec les pires et meilleur scénario" />
-    <option name="LAST_COMMIT_MESSAGE" value="code avec les pires et meilleur scénario" />
+    <MESSAGE value="version finale!" />
+    <option name="LAST_COMMIT_MESSAGE" value="version finale!" />
   </component>
 </project>
